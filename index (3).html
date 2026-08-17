@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hogwarts TB RPG - مبارزة السحرة الاستراتيجية</title>
+    <style>
+        body { margin: 0; background-color: #111; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; user-select: none; -webkit-user-select: none; touch-action: none; }
+        
+        /* واجهة المستخدم العلوية (شرائط الصحة والمانا) */
+        #ui-top { position: absolute; top: 10px; width: 100%; max-width: 800px; display: flex; justify-content: space-between; padding: 0 10px; box-sizing: border-box; z-index: 10; }
+        .stats-container { width: 45%; display: flex; flex-direction: column; gap: 5px; }
+        .bar-border { width: 100%; height: 15px; background-color: #333; border: 2px solid #777; border-radius: 8px; position: relative; overflow: hidden; }
+        .bar-fill { width: 100%; height: 100%; transition: width 0.3s ease-out; border-radius: 5px; float: left; }
+        
+        .hp-fill { background-color: #c0392b; } /* أحمر للصحة */
+        .mana-fill { background-color: #3498db; } /* أزرق للمانا */
+        
+        .house-icon { font-size: 16px; font-weight: bold; margin-bottom: 2px; }
+
+        /* ساحة العرض */
+        canvas { background: linear-gradient(to bottom, #1a252f 0%, #0d1117 100%); border: 3px solid #34495e; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.8); max-width: 95%; max-height: 55vh; }
+
+        /* لوحة التحكم بالأدوار والتعاويذ */
+        #turn-controls { position: absolute; bottom: 10px; width: 100%; max-width: 900px; background-color: rgba(26, 29, 41, 0.95); border: 2px solid #444; border-radius: 15px; padding: 15px; box-sizing: border-box; z-index: 15; display: flex; flex-direction: column; align-items: center; gap: 10px; backdrop-filter: blur(5px); }
+        #turn-message { font-size: 18px; font-weight: bold; text-align: center; color: #f1c40f; min-height: 25px;}
+        #action-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+
+        .btn { padding: 10px 18px; background-color: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 10px; font-size: 15px; font-weight: bold; color: white; cursor: pointer; backdrop-filter: blur(2px); -webkit-tap-highlight-color: transparent; transition: background 0.2s; font-family: inherit;}
+        .btn:active { background-color: rgba(255, 255, 255, 0.3); transform: scale(0.98); }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        
+        /* تلوين أزرار التعاويذ حسب النوع */
+        .btn-attack { border-color: #e74c3c; box-shadow: 0 0 5px rgba(231, 76, 60, 0.3); }
+        .btn-utility { border-color: #f1c40f; box-shadow: 0 0 5px rgba(241, 196, 15, 0.3); }
+        .btn-defense { border-color: #3498db; box-shadow: 0 0 5px rgba(52, 152, 219, 0.3); }
+        .btn-heal { border-color: #2ecc71; box-shadow: 0 0 5px rgba(46, 204, 113, 0.3); }
+
+        /* أوفرلاي حجر ورقة مقص (RPS) */
+        #rps-overlay { position: absolute; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 40; border-radius: 10px; }
+        #rps-overlay h2 { margin-bottom: 5px; color: #fff; text-align: center; }
+        #rps-attacker-msg { color: #e74c3c; font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center;}
+        #rps-btns { display: flex; gap: 20px; }
+        .rps-btn { font-size: 50px; background: none; border: none; cursor: pointer; transition: transform 0.2s; -webkit-tap-highlight-color: transparent;}
+        .rps-btn:active { transform: scale(0.9); }
+
+        #game-over { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 30px; font-weight: bold; display: none; text-align: center; z-index: 50; background: rgba(0,0,0,0.95); padding: 30px; border-radius: 15px; border: 3px solid #fff; box-shadow: 0 0 20px #fff; }
+
+    </style>
+</head>
+<body>
+
+    <div id="ui-top">
+        <!-- أنت (🦁 جريفندور) -->
+        <div dir="ltr" class="stats-container">
+            <div class="house-icon" style="color: #c0392b; text-align: right;">🦁 أنت (Gryffindor)</div>
+            <div class="bar-border"><div id="p1-hp" class="bar-fill hp-fill"></div></div>
+            <div class="bar-border" style="height: 10px; border-color: #555;"><div id="p1-mana" class="bar-fill mana-fill"></div></div>
+        </div>
+        <!-- الكمبيوتر (🐍 سليذرين) -->
+        <div dir="ltr" class="stats-container">
+            <div class="house-icon" style="color: #27ae60; text-align: left;">🐍 الكمبيوتر (Slytherin)</div>
+            <div class="bar-border"><div id="p2-hp" class="bar-fill hp-fill"></div></div>
+            <div class="bar-border" style="height: 10px; border-color: #555;"><div id="p2-mana" class="bar-fill mana-fill"></div></div>
+        </div>
+    </div>
+
+    <div id="game-over">اللاعب الفائز!<br><button onclick="location.reload()" style="padding: 10px 20px; font-size: 18px; margin-top: 10px; cursor: pointer;">مبارزة جديدة</button></div>
+
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+
+    <!-- أوفرلاي RPS -->
+    <div id="rps-overlay">
+        <h2>استعد للمواجهة السحرية!</h2>
+        <div id="rps-attacker-msg">أنت تهاجم! اختر حجر ورقة مقص</div>
+        <div id="rps-btns">
+            <button class="rps-btn" id="rps-rock">✊</button>
+            <button class="rps-btn" id="rps-paper">✋</button>
+            <button class="rps-btn" id="rps-scissors">✌️</button>
+        </div>
+    </div>
+
+    <!-- لوحة تحكم الأدوار والتعاويذ -->
+    <div id="turn-controls">
+        <div id="turn-message">انتظر دورك...</div>
+        <div id="action-btns">
+            <!-- هجوم direct -->
+            <button class="btn btn-attack" id="btn-incendio">Incendio (20💧)</button>
+            <!-- DoT -->
+            <button class="btn btn-attack" id="btn-rictusempra">Rictusempra (15💧)</button>
+            <!-- Stun -->
+            <button class="btn btn-utility" id="btn-petrificus">Petrificus (25💧)</button>
+            <!-- Mind Control -->
+            <button class="btn btn-utility" id="btn-legilimens">Legilimens (15💧)</button>
+            <!-- Debuff -->
+            <button class="btn btn-utility" id="btn-confundo">Confundo (10💧)</button>
+            <!-- درع -->
+            <button class="btn btn-defense" id="btn-protego">Protego (10💧)</button>
+            <!-- علاج -->
+            <button class="btn btn-heal" id="btn-episkey">Episkey (20💧)</button>
+            <!-- تأمل -->
+            <button class="btn" id="btn-meditate">Tämal (+30💧)</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // عناصر واجهة المستخدم
+        const ui = {
+            p1Hp: document.getElementById('p1-hp'), p1Mana: document.getElementById('p1-mana'),
+            p2Hp: document.getElementById('p2-hp'), p2Mana: document.getElementById('p2-mana'),
+            message: document.getElementById('turn-message'),
+            btns: {
+                incendio: document.getElementById('btn-incendio'), rictusempra: document.getElementById('btn-rictusempra'),
+                petrificus: document.getElementById('btn-petrificus'), legilimens: document.getElementById('btn-legilimens'), confundo: document.getElementById('btn-confundo'),
+                protego: document.getElementById('btn-protego'), episkey: document.getElementById('btn-episkey'),
+                meditate: document.getElementById('btn-meditate')
+            },
+            rps: { overlay: document.getElementById('rps-overlay'), rock: document.getElementById('rps-rock'), paper: document.getElementById('rps-paper'), scissors: document.getElementById('rps-scissors'), attackerMsg: document.getElementById('rps-attacker-msg') },
+            gameOver: document.getElementById('game-over')
+        };
+
+        const gravity = 0.6;
+        let isGameOver = false;
+        let p1, p2;
+        let turnContext = { attacker: null, defender: null, spell: null, currentTurn: 'player' };
+
+        // بيانات التعاويذ وقيم المانا المضبوطة للتوازن
+        const spellBook = {
+            incendio: { name: 'Incendio', damage: 30, cost: 20, color: '#e67e22', type: 'attack' },
+            rictusempra: { name: 'Rictusempra', damage: 10, cost: 15, color: '#f1c40f', type: 'attack', dotDamage: 10, dotTurns: 3 }, // DoT
+            petrificus: { name: 'Petrificus Totalus', damage: 5, cost: 25, color: '#bdc3c7', type: 'attack', stunTurns: 1 }, // Stun
+            legilimens: { name: 'Legilimens', damage: 0, cost: 15, color: '#9b59b6', type: 'utility', legilimensActive: true }, // Mind Control
+            confundo: { name: 'Confundo', damage: 0, cost: 10, color: '#34495e', type: 'utility', confundoTurns: 1 }, // Debuff
+            protego: { name: 'Protego', damage: 0, cost: 10, color: '#3498db', type: 'defense' },
+            episkey: { name: 'Episkey', heal: 30, cost: 20, color: '#2ecc71', type: 'heal' }
+        };
+
+        // كلاس اللاعب المُحدث ليدعم تأثيرات الحالة
+        class WizardTB {
+            constructor(x, emoji, shieldColor) {
+                this.x = x; this.y = canvas.height - 30 - 80; this.width = 60; this.height = 80;
+                this.emoji = emoji; this.health = 100; this.mana = 100;
+                this.isShielding = false; this.shieldColor = shieldColor;
+                
+                // تأثيرات الحالة (Status Effects)
+                this.stunTurns = 0;       // شلل
+                this.confundoTurns = 0;    // ارتباك
+                this.bleedTurns = 0;      // نزيف (DoT)
+                this.bleedDamage = 0;
+            }
+
+            draw() {
+                // رسم الدرع (Protego) لو متفعل
+                if (this.isShielding) {
+                    ctx.beginPath(); ctx.arc(this.x + this.width / 2, this.y + this.height / 2, 60, 0, Math.PI * 2);
+                    ctx.strokeStyle = this.shieldColor; ctx.lineWidth = 4; ctx.shadowBlur = 15; ctx.shadowColor = this.shieldColor;
+                    ctx.stroke(); ctx.shadowBlur = 0; ctx.fillStyle = this.shieldColor.replace('1)', '0.2)'); ctx.fill();
+                }
+
+                // رسم حالة الشلل (تأثير ضبابي رمادي)
+                if (this.stunTurns > 0) {
+                    ctx.save(); ctx.font = '80px Arial'; ctx.fillStyle = 'rgba(100, 100, 100, 0.5)';
+                    ctx.fillText(this.emoji, this.x - 10, this.y + 70); ctx.restore();
+                } else if (this.bleedTurns > 0) {
+                    // حالة النزيف (توهج أحمر متقطع)
+                    ctx.save(); ctx.font = '80px Arial'; ctx.shadowBlur = (Date.now() % 500 < 250) ? 20 : 0; ctx.shadowColor = '#e74c3c';
+                    ctx.fillText(this.emoji, this.x - 10, this.y + 70); ctx.restore();
+                } else {
+                    ctx.font = '80px Arial'; ctx.fillText(this.emoji, this.x - 10, this.y + 70);
+                }
+            }
+
+            canCast(spell) { return this.mana >= spell.cost; }
+            consumeMana(spell) { this.mana -= spell.cost; if(this.mana < 0) this.mana = 0; }
+        }
+
+        p1 = new WizardTB(100, '🧙‍♂️', 'rgba(52, 152, 219, 1)'); // أنت
+        p2 = new WizardTB(canvas.width - 160, '🧙‍♀️', 'rgba(46, 204, 113, 1)'); // الكمبيوتر
+
+        // تحديث شرائط الإحصائيات
+        function updateStatsUI() {
+            ui.p1Hp.style.width = p1.health + '%'; ui.p1Mana.style.width = p1.mana + '%';
+            ui.p2Hp.style.width = p2.health + '%'; ui.p2Mana.style.width = p2.mana + '%';
+        }
+
+        // --- نظام الأدوار و الـ RPS ---
+
+        function toggleButtons(enable) {
+            Object.values(ui.btns).forEach(btn => btn.disabled = !enable);
+        }
+
+        // متغيراتMind Control
+        let legilimensTarget = null; // من يرى أفكار من؟
+
+        // 1. اللاعب يختار تعويذة في دوره
+        function handleP1Action(spellKey) {
+            if (isGameOver) return;
+            const spell = spellBook[spellKey];
+
+            if (!p1.canCast(spell)) {
+                ui.message.innerText = `❌ المانا غير كافية لتعويذة ${spell.name}! استخدم التأمل.`;
+                return;
+            }
+
+            if (spell.type === 'attack') {
+                // هجوم: تفعيل الـ RPS
+                turnContext.attacker = p1; turnContext.defender = p2; turnContext.spell = spell;
+                p1.isShielding = false; toggleButtons(false);
+                ui.rps.overlay.style.display = 'flex';
+                
+                // ميكانيكية Legilimens: لو أنت ألقيتها على الكمبيوتر، هتشوف اختياره مسبقاً
+                if (legilimensTarget === p2) {
+                    const aiNextRPS = getAIChoice(); // الكمبيوتر بيختار سراً
+                    const rpsEmojis = { rock: '✊', paper: '✋', scissors: '✌️' };
+                    ui.rps.attackerMsg.innerText = `🔮 (LegilimensActive) الكمبيوتر سيلعب: ${rpsEmojis[aiNextRPS]}! اختر حجر ورقة مقص لتكسبه!`;
+                    ui.rps.attackerMsg.style.color = '#9b59b6';
+                    legilimensTarget = null; // فك التأثير بعد الاستخدام
+                    pendingAIChoice = aiNextRPS; // حفظ الاختيار لتنفيذه في handleRPS
+                } else {
+                    ui.rps.attackerMsg.innerText = `أنت تهاجم بـ ${spell.name}! اختر حجر ورقة مقص ✊✋✌️`;
+                    ui.rps.attackerMsg.style.color = '#fff';
+                    pendingAIChoice = null;
+                }
+            } else if (spell.type === 'defense') {
+                executeDefense(p1, spell);
+            } else if (spell.type === 'heal') {
+                executeHeal(p1, spell);
+            } else if (spell.type === 'utility') {
+                if (spell.legilimensActive) executeLegilimens(p1, p2, spell);
+                else if (spell.confundoTurns) executeConfundo(p1, p2, spell);
+            }
+        }
+
+        let pendingAIChoice = null; // لحفظ اختيار الـ MC
+
+        // التأمل (Mana Regen) للاعب
+        ui.btns.meditate.addEventListener('click', () => {
+            p1.mana += 30; if (p1.mana > 100) p1.mana = 100;
+            ui.message.innerText = 'أنت تتأمل وتستعيد 30 نقطة مانا 💧.';
+            p1.isShielding = false; updateStatsUI(); toggleButtons(false);
+            setTimeout(startAITurn, 1500);
+        });
+
+        // حجر ورقة مقص التفاعلي
+        function handleRPS(playerChoice) {
+            ui.rps.overlay.style.display = 'none';
+            const choices = ['rock', 'paper', 'scissors'];
+            
+            // لو MC مفعل، نستخدم الاختيار اللي حفظناه، غير كدا نختار عشوائي
+            const aiChoice = pendingAIChoice ? pendingAIChoice : getAIChoice();
+            pendingAIChoice = null; // فك الحفظ
+
+            const rpsEmojis = { rock: '✊', paper: '✋', scissors: '✌️' };
+
+            const isPlayerAttacking = (turnContext.attacker === p1);
+            
+            ui.message.innerText = `أنت اخترت ${rpsEmojis[playerChoice]}، الكمبيوتر اختار ${rpsEmojis[aiChoice]}...`;
+
+            setTimeout(() => {
+                let damageMultiplier = 1;
+                // حساب الفائز في RPS لتحديد الضرر
+                if (playerChoice === aiChoice) {
+                    ui.message.innerText += ' تعادل🤝! الضرر كامل.';
+                    damageMultiplier = 1; 
+                } else if (
+                    (playerChoice === 'rock' && aiChoice === 'scissors') ||
+                    (playerChoice === 'paper' && aiChoice === 'rock') ||
+                    (playerChoice === 'scissors' && aiChoice === 'paper')
+                ) {
+                    // اللاعب كسب الـ RPS
+                    if (isPlayerAttacking) {
+                        ui.message.innerText += ' كسبت المواجهة🔥! ضررك كامل.';
+                        damageMultiplier = 1;
+                    } else {
+                        ui.message.innerText += ' دافعت بنجاح🛡️! ضرر الكمبيوتر النص.';
+                        damageMultiplier = 0.5;
+                    }
+                } else {
+                    // اللاعب خسر الـ RPS
+                    if (isPlayerAttacking) {
+                        ui.message.innerText += ' صدوك🛡️! ضررك النص بس.';
+                        damageMultiplier = 0.5;
+                    } else {
+                        ui.message.innerText += ' فشلت في الدفاع💥! ضرر الكمبيوتر كامل.';
+                        damageMultiplier = 1;
+                    }
+                }
+                
+                // تنفيذ الهجوم بعد RPS
+                setTimeout(() => {
+                    executeAttack(turnContext.attacker, turnContext.defender, turnContext.spell, damageMultiplier);
+                }, 1000);
+            }, 1000);
+        }
+
+        // ربط أزرار RPS
+        ui.rps.rock.addEventListener('click', () => handleRPS('rock'));
+        ui.rps.paper.addEventListener('click', () => handleRPS('paper'));
+        ui.rps.scissors.addEventListener('click', () => handleRPS('scissors'));
+
+
+        // 3. تنفيذ التعاويذ (تحديث شامل ليدعم الـ RPG effects)
+
+        function executeAttack(caster, target, spell, multiplier = 1) {
+            caster.consumeMana(spell);
+            
+            let finalDamage = spell.damage * multiplier;
+            
+            // تأثير Confundo: لو المهاجم داوخ، ضرره النص علطول
+            if (caster.confundoTurns > 0) {
+                finalDamage *= 0.5;
+                ui.message.innerText += ` (ConfundoActive المهاجم مرتبك، ضرره النص)`;
+                // فك التأثير بعد الاستخدام
+                caster.confundoTurns = 0;
+            }
+
+            // تأثير درع بروتيجو (يقلل النص)
+            if (target.isShielding) {
+                finalDamage *= 0.5;
+                ui.message.innerText += ` لكن الدرع قلل الضرر للنص!`;
+            }
+            
+            target.health -= finalDamage;
+            if (target.health < 0) target.health = 0;
+            updateStatsUI();
+
+            const casterType = (caster === p1) ? 'أنت' : 'الكمبيوتر';
+            const targetType = (target === p1) ? 'عليك' : 'على الكمبيوتر';
+            const msg = (caster === p1) ? ui.message.innerText : `${casterType} ألقى تعويذة ${spell.name}`;
+            ui.message.innerText = msg;
+            
+            // تحقق من تأثيرات الحالة الجديدة في الهجوم
+            if (spell.dotTurns) {
+                // Rictusempra - نزيف
+                target.bleedTurns = spell.dotTurns;
+                target.bleedDamage = spell.dotDamage;
+                ui.message.innerText += ` وتسبب له تعويذة Rictusempra نزيفاً HP لمدة 3 أدوار! ✨`;
+            } else if (spell.stunTurns) {
+                // Petrificus - شلل
+                target.stunTurns = spell.stunTurns;
+                ui.message.innerText += ` ووتسبب له تعويذة Petrificus شللاً تاماً الدور القادم! 🌪️`;
+            }
+
+            // تحقق من نهاية اللعبة
+            if (target.health <= 0) {
+                endGame((caster === p1) ? 'لقد فزت! بطل هوجوورتس🏆' : 'الكمبيوتر هزمك! حاول مرة أخرى🐍');
+                return;
+            }
+
+            // الانتقال للدور القادم بعد انتهاء الأنيميشن
+            if (caster === p1) {
+                setTimeout(startAITurn, 1500);
+            } else {
+                startP1Turn();
+            }
+        }
+
+        // تعويذة الدفاع (Protego)
+        function executeDefense(caster, spell) {
+            caster.consumeMana(spell);
+            caster.isShielding = true;
+            updateStatsUI();
+            const casterType = (caster === p1) ? 'أنت تفعل' : 'الكمبيوتر يفعل';
+            ui.message.innerText = `${casterType} تعويذة Protego 🛡️. أنت محمي بنسبة 50% الدور الجاي.`;
+            toggleButtons(false);
+            if (caster === p1) setTimeout(startAITurn, 1500);
+            else startP1Turn();
+        }
+
+        // تعويذة العلاج (Episkey)
+        function executeHeal(caster, spell) {
+            caster.consumeMana(spell);
+            caster.isShielding = false; // فك الدرع عند العلاج
+            caster.health += spell.heal;
+            if (caster.health > 100) caster.health = 100;
+            updateStatsUI();
+            const casterType = (caster === p1) ? 'أنت تستخدم' : 'الكمبيوتر يستخدم';
+            ui.message.innerText = `${casterType} تعويذة Episkey ✨ وتستعيد جزءاً من صحتك.`;
+            toggleButtons(false);
+            if (caster === p1) setTimeout(startAITurn, 1500);
+            else startP1Turn();
+        }
+
+        // تعويذة قراءة الأفكار (Legilimens)
+        function executeLegilimens(caster, target, spell) {
+            caster.consumeMana(spell);
+            caster.isShielding = false;
+            updateStatsUI();
+            const casterType = (caster === p1) ? 'أنت تلقي' : 'الكمبيوتر يلقي';
+            ui.message.innerText = `${casterType} تعويذة Legilimens 🔮. ستقرأ أفكار الخصم في هجومك القادم!`;
+            legilimensTarget = target; // تفعيل التأثير
+            toggleButtons(false);
+            if (caster === p1) setTimeout(startAITurn, 1500);
+            else startP1Turn();
+        }
+
+        // تعويذة الارتباك (Confundo)
+        function executeConfundo(caster, target, spell) {
+            caster.consumeMana(spell);
+            caster.isShielding = false;
+            updateStatsUI();
+            const casterType = (caster === p1) ? 'أنت تلقي' : 'الكمبيوتر يلقي';
+            ui.message.innerText = `${casterType} تعويذة Confundo 😵. الخصم مرتبك، هجمته الجاية هتنقص النص!`;
+            target.confundoTurns = 1; // تفعيل التأثير
+            toggleButtons(false);
+            if (caster === p1) setTimeout(startAITurn, 1500);
+            else startP1Turn();
+        }
+
+
+        // 4. دور الكمبيوتر (AI) الذكي والمنصف والداعم للـ RPG
+
+        function applyTurnEffects(wizard) {
+            // تحقق من الشفاء التلقائي DoT (غير موجود في Hogwarts Legacy لكن كويس للـ RPG)
+            // إحنا نستخدم النزيف Bleeding بس
+            if (wizard.bleedTurns > 0) {
+                const casterName = (wizard === p1) ? 'أنت' : 'الكمبيوتر';
+                wizard.health -= wizard.bleedDamage;
+                if (wizard.health < 0) wizard.health = 0;
+                ui.message.innerText = `🩸 ${casterName} ينزف وينقص 10 HP (باقي ${wizard.bleedTurns} أدوار).`;
+                wizard.bleedTurns--;
+                updateStatsUI();
+                return true; // تم تطبيق تأثير ضرر، نحتاج تأخير قبل الحركة التالية
+            }
+            return false;
+        }
+
+        function startP1Turn() {
+            if (isGameOver) return;
+            turnContext.currentTurn = 'player';
+            p1.isShielding = false; // فك الدرع في بداية دوره
+
+            // تطبيق تأثيرات النزيف أولاً
+            const bleedApplied = applyTurnEffects(p1);
+            
+            // تحقق من الشللSkip Turn
+            if (p1.stunTurns > 0) {
+                p1.stunTurns--;
+                ui.message.innerText += ' 🌪️ أنت مشلول تماماً! دورك فوت.';
+                toggleButtons(false);
+                setTimeout(startAITurn, 2000);
+                return;
+            }
+
+            const delay = bleedApplied ? 2000 : 0;
+            setTimeout(() => {
+                toggleButtons(true);
+                ui.message.innerText = 'دورك! اختر تعويذة هجومية أو دفاعية 👇.';
+                ui.message.style.color = '#f1c40f';
+            }, delay);
+        }
+
+        function startAITurn() {
+            if (isGameOver) return;
+            turnContext.currentTurn = 'ai';
+            toggleButtons(false);
+            ui.message.innerText = 'دور الكمبيوتر... انتظر ⏳.';
+            ui.message.style.color = '#e74c3c';
+            p2.isShielding = false; // فك الدرع في بداية دوره
+
+            // تطبيق تأثيرات النزيف أولاً
+            const bleedApplied = applyTurnEffects(p2);
+            
+            // تحقق من الشللSkip Turn
+            if (p2.stunTurns > 0) {
+                p2.stunTurns--;
+                ui.message.innerText += ' 🌪️ الكمبيوتر مشلول تماماً! دوره فوت.';
+                setTimeout(startP1Turn, 2000);
+                return;
+            }
+
+            const delay = bleedApplied ? 2000 : 1500;
+            setTimeout(() => {
+                // ذكاء اصطناعي RPG مبسط
+                // 1. هل الصحة قليلة جداً؟ (علاج)
+                if (p2.health < 40 && p2.canCast(spellBook.episkey)) {
+                    executeHeal(p2, spellBook.episkey);
+                }
+                // 2. هل المانا خلصت؟ (تأمل)
+                else if (p2.mana < 20) {
+                    p2.mana += 30; if (p2.mana > 100) p2.mana = 100;
+                    ui.message.innerText = 'الكمبيوتر يتأمل ويستعيد المانا 💧.'; updateStatsUI();
+                    setTimeout(startP1Turn, 1500);
+                }
+                // 3. هل اللاعب منزف وممكن نخلص عليه؟ (شلل أو Confundo)
+                else if (p1.bleedTurns > 0 && p2.canCast(spellBook.petrificus)) {
+                    executeSpellAI(p2, p1, spellBook.petrificus);
+                }
+                // 4. هل اللاعب مشغل درع؟ (MC مسبقاً أو تأمل)
+                else if (p1.isShielding && Math.random() < 0.5 && p2.canCast(spellBook.legilimens)) {
+                    executeLegilimens(p2, p1, spellBook.legilimens);
+                }
+                // 5. هجوم تلقائي (Incendio لو فيه مانا، Rictusempra غير كدا)
+                else {
+                    let spellToCast = spellBook.incendio;
+                    if (!p2.canCast(spellBook.incendio)) spellToCast = spellBook.rictusempra;
+                    executeSpellAI(p2, p1, spellToCast);
+                }
+            }, delay);
+        }
+
+        // دالة مساعدة لتنفيذ RPS في هجوم الـ AI
+        function executeSpellAI(caster, target, spell) {
+            turnContext.attacker = caster;
+            turnContext.defender = target;
+            turnContext.spell = spell;
+            
+            // ميكانيكية Legilimens: لو الكمبيوتر قرأ أفكارك، هيعرف اختيارك الـ RPS
+            let aiChoice = getAIChoice(); // اختيار عشوائي مبدئي
+
+            ui.message.innerText = `الكمبيوتر يجهز تعويذة ${spell.name}! دافع عن نفسك⚔️`;
+            
+            setTimeout(() => {
+                ui.rps.overlay.style.display = 'flex';
+                
+                if (legilimensTarget === p1) {
+                    const rpsEmojis = { rock: '✊', paper: '✋', scissors: '✌️' };
+                    // أنت بتقرأ أفكاره، فتشوف الـ AI Choice
+                    ui.rps.attackerMsg.innerText = `🔮 (LegilimensActive) أنت تقرأ أفكاره! الكمبيوتر سيلعب: ${rpsEmojis[aiChoice]}. اختر لتهزمه!`;
+                    ui.rps.attackerMsg.style.color = '#9b59b6';
+                    legilimensTarget = null;
+                    pendingAIChoice = aiChoice; // حفظه لـ handleRPS
+                } else {
+                    ui.rps.attackerMsg.innerText = `الكمبيوتر يهاجمك بـ ${spell.name}! اختر حجر ورقة مقص بسرعة للدفاع 🛡️✊✋✌️`;
+                    ui.rps.attackerMsg.style.color = '#e74c3c';
+                    pendingAIChoice = null;
+                }
+            }, 800);
+        }
+
+        // دالة للحصول على اختيار الـ AI عشوائياً
+        function getAIChoice() {
+            const choices = ['rock', 'paper', 'scissors'];
+            return choices[Math.floor(Math.random() * choices.length)];
+        }
+
+        function endGame(message) {
+            isGameOver = true; toggleButtons(false); gameActive = false;
+            ui.gameOver.innerHTML = message + '<br><button onclick="location.reload()" style="padding: 10px 20px; font-size: 18px; margin-top: 15px; cursor: pointer; background:#f1c40f; border:none; border-radius:5px; font-weight:bold;">مبارزة جديدة</button>';
+            ui.gameOver.style.display = 'block';
+            ui.message.innerText = 'انتهت المبارزة.';
+        }
+
+
+        // ربط أزرار التعاويذ باللاعب
+        ui.btns.incendio.addEventListener('click', () => handleP1Action('incendio'));
+        ui.btns.rictusempra.addEventListener('click', () => handleP1Action('rictusempra'));
+        ui.btns.petrificus.addEventListener('click', () => handleP1Action('petrificus'));
+        ui.btns.legilimens.addEventListener('click', () => handleP1Action('legilimens'));
+        ui.btns.confundo.addEventListener('click', () => handleP1Action('confundo'));
+        ui.btns.protego.addEventListener('click', () => handleP1Action('protego'));
+        ui.btns.episkey.addEventListener('click', () => handleP1Action('episkey'));
+        ui.btns.meditate.addEventListener('click', () => { /* تم ربطه في الأعلى */ });
+
+        // --- الـ Game Loop (للرسم فقط) ---
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // الأرضية
+            ctx.fillStyle = '#2c3e50'; ctx.fillRect(0, canvas.height - 30, canvas.width, 30);
+            p1.draw(); p2.draw();
+            if (!isGameOver) window.requestAnimationFrame(animate);
+        }
+
+        // تشغيل اللعبة
+        updateStatsUI();
+        animate();
+        startP1Turn(); // أنت تبدأ دايماً.
+
+    </script>
+</body>
+</html>
