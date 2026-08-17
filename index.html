@@ -119,7 +119,7 @@ canvas{display:block;width:100%;height:100%;border:1px solid rgba(255,255,255,.1
       <div class="house-grid">
         <button class="house-btn" id="lion-pick" data-house="lion"><span class="sigil">🦁</span><span class="house-name">Gryffindor</span><span class="house-ar">جريفندور</span><span class="house-motto">شجاعة • جرأة</span></button>
         <button class="house-btn" id="snake-pick" data-house="snake"><span class="sigil">🐍</span><span class="house-name">Slytherin</span><span class="house-ar">سليذرين</span><span class="house-motto">طموح • دهاء</span></button>
-        <button class="house-btn" id="badger-pick" data-house="badger"><span class="sigil">🦡</span><span class="house-name">Hufflepuff</span><span class="house-ar">هوفلباف</span><span class="house-motto">وفاء • صبر</span></button>
+        <button class="house-btn" id="badger-pick" data-house="badger"><span class="sigil">🦡</span><span class="house-name">Hufflepuff</span><span class="house-ar">هافلباف</span><span class="house-motto">وفاء • صبر</span></button>
         <button class="house-btn" id="eagle-pick" data-house="eagle"><span class="sigil">🦅</span><span class="house-name">Ravenclaw</span><span class="house-ar">ريفينكلو</span><span class="house-motto">ذكاء • حكمة</span></button>
       </div>
     </div>
@@ -201,7 +201,7 @@ const rpsButtons={rock:document.getElementById('rps-rock'),paper:document.getEle
 const houses={
   lion:{name:'جريفندور',color:'#e85d4a',glow:'#ff8a7d',sigil:'🦁'},
   snake:{name:'سليذرين',color:'#36d486',glow:'#8affc2',sigil:'🐍'},
-  badger:{name:'هوفلباف',color:'#e9c46a',glow:'#ffe7a1',sigil:'🦡'},
+  badger:{name:'هافلباف',color:'#e9c46a',glow:'#ffe7a1',sigil:'🦡'},
   eagle:{name:'ريفينكلو',color:'#4ea4ef',glow:'#9bd2ff',sigil:'🦅'}
 };
 const spellBook={
@@ -219,7 +219,7 @@ let p1=null,p2=null;
 let active=false,gameOver=false;
 let globalTime=0,lastFrame=0,screenShake=0;
 let particles=[],projectiles=[],floatingTexts=[],rings=[],stars=[],embers=[];
-let duel={attacker:null,defender:null,spell:null,pendingAIChoice:null};
+let duel={attacker:null,defender:null,spell:null,pendingAIChoice:null,rpsLocked:false};
 
 for(let i=0;i<135;i++) stars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height*.58,r:.4+Math.random()*1.7,a:.15+Math.random()*.85,s:.3+Math.random()*1.7});
 for(let i=0;i<35;i++) embers.push({x:Math.random()*canvas.width,y:canvas.height*.55+Math.random()*70,r:.5+Math.random()*1.5,a:.15+Math.random()*.35,phase:Math.random()*Math.PI*2});
@@ -272,27 +272,28 @@ class Wizard{
     // Shadow
     ctx.save();ctx.globalAlpha=.55;ctx.fillStyle='#000';ctx.filter='blur(5px)';ctx.beginPath();ctx.ellipse(x,y+2,44,10,0,0,Math.PI*2);ctx.fill();ctx.restore();ctx.filter='none';
     if(this.isShielding){ctx.save();ctx.translate(x,y-58);const pulse=1+Math.sin(globalTime*.006)*.035;ctx.scale(pulse,pulse);ctx.beginPath();ctx.arc(0,0,78,Math.PI,0);ctx.strokeStyle='#64b5ff';ctx.lineWidth=4;ctx.setLineDash([15,9]);ctx.lineDashOffset=-globalTime*.08;ctx.shadowBlur=25;ctx.shadowColor='#64b5ff';ctx.stroke();ctx.fillStyle='rgba(100,181,255,.08)';ctx.fill();ctx.restore()}
-    drawWizardFigure(ctx,x,y,this.color,this.isFacingRight,this.state,globalTime,this.hitFlash,this.castGlow);
+    drawWizardFigure(ctx,x,y,this.color,this.glow,this.house?.sigil,this.isFacingRight,this.state,globalTime,this.hitFlash,this.castGlow);
     // Status icons
     let sy=y-146;ctx.textAlign='center';ctx.font='23px Arial';if(this.stunTurns>0){ctx.fillText('⛓️',x,sy);sy-=27}if(this.confundoTurns>0){ctx.fillText('💫',x,sy);sy-=27}if(this.hasLegilimens){ctx.fillText('👁️',x,sy);sy-=27}
     if(this.bleedTurns>0){ctx.save();ctx.strokeStyle='#ff355d';ctx.lineWidth=3;ctx.shadowBlur=18;ctx.shadowColor='#ff355d';ctx.beginPath();ctx.ellipse(x,y,42,7,0,0,Math.PI*2);ctx.stroke();ctx.restore()}
     this.hitFlash=Math.max(0,this.hitFlash-.055);this.castGlow=Math.max(0,this.castGlow-.035)
   }
 }
-function drawWizardFigure(ctx,x,y,color,face,state,time,hitFlash,castGlow){
+function drawWizardFigure(ctx,x,y,color,glowColor,sigil,face,state,time,hitFlash,castGlow){
   ctx.save();
   ctx.translate(x, y + Math.sin(time*0.0028)*2);
   if(!face) ctx.scale(-1,1);
 
   const pulse = 1 + Math.sin(time*0.008)*0.035;
+  const idlePulse = 0.5 + Math.sin(time*0.0022)*0.5;
   const casting = state === 'casting';
   const capeWave = Math.sin(time*0.004)*2.5;
   const robeLift = Math.sin(time*0.005)*1.5;
 
   // Ground glow / magical presence
   ctx.save();
-  ctx.globalAlpha = 0.16 + castGlow*0.18;
-  ctx.fillStyle = color;
+  ctx.globalAlpha = 0.2 + idlePulse*0.06 + castGlow*0.2;
+  ctx.fillStyle = glowColor;
   ctx.shadowBlur = 32;
   ctx.shadowColor = color;
   ctx.beginPath();
@@ -300,10 +301,13 @@ function drawWizardFigure(ctx,x,y,color,face,state,time,hitFlash,castGlow){
   ctx.fill();
   ctx.restore();
 
-  // Wizard aura
+  // Wizard aura — always-on house-colored glow, brighter while casting
   ctx.save();
-  ctx.globalAlpha = 0.10 + castGlow*0.12;
-  ctx.fillStyle = color;
+  ctx.globalAlpha = 0.16 + idlePulse*0.08 + castGlow*0.16;
+  const auraGrad = ctx.createRadialGradient(0,-66,4,0,-66,58+castGlow*10);
+  auraGrad.addColorStop(0, glowColor);
+  auraGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = auraGrad;
   ctx.shadowBlur = 34 + castGlow*28;
   ctx.shadowColor = color;
   ctx.beginPath();
@@ -311,40 +315,87 @@ function drawWizardFigure(ctx,x,y,color,face,state,time,hitFlash,castGlow){
   ctx.fill();
   ctx.restore();
 
-  // Back of robe / cape
+  // Faint rotating house-magic ring — always visible, marks each wizard's house color
   ctx.save();
-  ctx.shadowBlur = 18 + castGlow*28;
-  ctx.shadowColor = color;
-  ctx.fillStyle = '#090b12';
+  ctx.globalAlpha = 0.22 + castGlow*0.25;
   ctx.strokeStyle = color;
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([3,10]);
+  ctx.lineDashOffset = time*0.03;
+  ctx.shadowBlur = 12;
+  ctx.shadowColor = color;
   ctx.beginPath();
-  ctx.moveTo(-10,-68);
-  ctx.quadraticCurveTo(-31,-46,-40,-6 + capeWave);
-  ctx.quadraticCurveTo(-30,2,-8,5 + robeLift);
-  ctx.lineTo(8,5 + robeLift);
-  ctx.quadraticCurveTo(28,2,40,-6 - capeWave);
-  ctx.quadraticCurveTo(31,-46,10,-68);
-  ctx.closePath();
-  ctx.fill();
+  ctx.ellipse(0,-2,50,15,0,0,Math.PI*2);
   ctx.stroke();
   ctx.restore();
 
-  // Body / robe center
+  // Back of robe / cape — tinted with house color
   ctx.save();
-  ctx.fillStyle = 'rgba(18,20,30,.98)';
+  ctx.shadowBlur = 18 + castGlow*28;
+  ctx.shadowColor = color;
+  const capePath = new Path2D();
+  capePath.moveTo(-10,-68);
+  capePath.quadraticCurveTo(-31,-46,-40,-6 + capeWave);
+  capePath.quadraticCurveTo(-30,2,-8,5 + robeLift);
+  capePath.lineTo(8,5 + robeLift);
+  capePath.quadraticCurveTo(28,2,40,-6 - capeWave);
+  capePath.quadraticCurveTo(31,-46,10,-68);
+  capePath.closePath();
+  ctx.fillStyle = '#0a0c14';
+  ctx.fill(capePath);
+  ctx.globalAlpha = 0.3;
+  ctx.fillStyle = color;
+  ctx.fill(capePath);
+  ctx.globalAlpha = 1;
   ctx.strokeStyle = color;
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 3;
+  ctx.stroke(capePath);
+  ctx.restore();
+
+  // Body / robe center — tinted with house color
+  ctx.save();
+  const bodyPath = new Path2D();
+  bodyPath.moveTo(-20,-55);
+  bodyPath.quadraticCurveTo(-16,-38,-20,-6);
+  bodyPath.quadraticCurveTo(0,3,20,-6);
+  bodyPath.quadraticCurveTo(16,-38,20,-55);
+  bodyPath.closePath();
   ctx.shadowBlur = 14 + castGlow*20;
   ctx.shadowColor = color;
-  ctx.beginPath();
-  ctx.moveTo(-20,-55);
-  ctx.quadraticCurveTo(-16,-38,-20,-6);
-  ctx.quadraticCurveTo(0,3,20,-6);
-  ctx.quadraticCurveTo(16,-38,20,-55);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
+  ctx.fillStyle = 'rgba(20,22,32,.98)';
+  ctx.fill(bodyPath);
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = color;
+  ctx.fill(bodyPath);
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.5;
+  ctx.stroke(bodyPath);
+
+  // House sash — diagonal stripe of the house color across the chest
+  ctx.save();
+  ctx.clip(bodyPath);
+  ctx.globalAlpha = 0.85;
+  ctx.strokeStyle = glowColor;
+  ctx.lineWidth = 8;
+  ctx.shadowBlur = 6;
+  ctx.shadowColor = color;
+  ctx.beginPath(); ctx.moveTo(-24,-52); ctx.lineTo(6,4); ctx.stroke();
+  ctx.restore();
+
+  // House crest / sigil on the chest
+  if(sigil){
+    ctx.save();
+    if(!face) ctx.scale(-1,1); // undo the outer mirror so the emoji reads correctly
+    ctx.globalAlpha = 0.95;
+    ctx.font = '15px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowBlur = 10 + castGlow*10;
+    ctx.shadowColor = color;
+    ctx.fillText(sigil, 0, -30);
+    ctx.restore();
+  }
 
   // House trim and belt
   ctx.shadowBlur = 0;
@@ -369,40 +420,52 @@ function drawWizardFigure(ctx,x,y,color,face,state,time,hitFlash,castGlow){
   ctx.fillStyle = 'rgba(255,255,255,.10)';
   ctx.beginPath(); ctx.arc(-5,-87,7,Math.PI*1.15,Math.PI*1.85); ctx.fill();
   
-  // Eyes / visor-like face detail
-  ctx.fillStyle = color;
-  ctx.shadowBlur = 8;
+  // Eyes / visor-like face detail — glow in the house color
+  ctx.fillStyle = glowColor;
+  ctx.shadowBlur = 10;
   ctx.shadowColor = color;
-  ctx.beginPath(); ctx.arc(6,-84,2.2,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(6,-84,2.4,0,Math.PI*2); ctx.fill();
   ctx.restore();
 
-  // Classic pointed wizard hat
+  // Classic pointed wizard hat — tinted with house color
   ctx.save();
-  ctx.fillStyle = '#11131d';
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2.5;
   ctx.shadowBlur = 18 + castGlow*30;
   ctx.shadowColor = color;
-  
+
   // Hat brim
-  ctx.beginPath();
-  ctx.ellipse(0,-98,27,7,0,0,Math.PI*2);
-  ctx.fill();
-  ctx.stroke();
+  const brimPath = new Path2D();
+  brimPath.ellipse(0,-98,27,7,0,0,Math.PI*2);
+  ctx.fillStyle = '#13141f';
+  ctx.fill(brimPath);
+  ctx.globalAlpha = 0.28;
+  ctx.fillStyle = color;
+  ctx.fill(brimPath);
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.5;
+  ctx.stroke(brimPath);
 
   // Bent pointed cone
-  ctx.beginPath();
-  ctx.moveTo(-20,-99);
-  ctx.quadraticCurveTo(-9,-112,-2,-130);
-  ctx.quadraticCurveTo(9,-121,17,-126);
-  ctx.quadraticCurveTo(12,-110,20,-99);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // Hat band
+  const conePath = new Path2D();
+  conePath.moveTo(-20,-99);
+  conePath.quadraticCurveTo(-9,-112,-2,-130);
+  conePath.quadraticCurveTo(9,-121,17,-126);
+  conePath.quadraticCurveTo(12,-110,20,-99);
+  conePath.closePath();
+  ctx.fillStyle = '#13141f';
+  ctx.fill(conePath);
+  ctx.globalAlpha = 0.28;
+  ctx.fillStyle = color;
+  ctx.fill(conePath);
+  ctx.globalAlpha = 1;
   ctx.strokeStyle = color;
+  ctx.lineWidth = 2.5;
+  ctx.stroke(conePath);
+
+  // Hat band — bright house glow color for contrast
+  ctx.strokeStyle = glowColor;
   ctx.lineWidth = 3;
+  ctx.shadowBlur = 10;
   ctx.beginPath(); ctx.moveTo(-16,-104); ctx.quadraticCurveTo(0,-100,16,-104); ctx.stroke();
   ctx.restore();
 
@@ -437,15 +500,15 @@ function drawWizardFigure(ctx,x,y,color,face,state,time,hitFlash,castGlow){
     ctx.shadowBlur = 20 + castGlow*40;
     ctx.shadowColor = color;
     ctx.beginPath(); ctx.moveTo(80,-49+armBob); ctx.lineTo(93,-44+armBob); ctx.stroke();
-    ctx.fillStyle = '#fff';
+    ctx.fillStyle = glowColor;
     ctx.beginPath(); ctx.arc(94,-44+armBob,5.5+castGlow*2,0,Math.PI*2); ctx.fill();
 
-    // Spell sparks around wand
+    // Spell sparks around wand — orbit in the house color
     for(let i=0;i<4;i++){
       const a=time*0.006 + i*Math.PI/2;
       const rr=11+Math.sin(time*0.01+i)*4;
       ctx.globalAlpha=.55;
-      ctx.fillStyle=color;
+      ctx.fillStyle=glowColor;
       ctx.beginPath(); ctx.arc(94+Math.cos(a)*rr,-44+armBob+Math.sin(a)*rr,1.8,0,Math.PI*2); ctx.fill();
     }
   }else{
@@ -512,15 +575,80 @@ function handleSpell(key){if(!active||gameOver)return;const spell=spellBook[key]
 spellButtons.forEach(btn=>btn.addEventListener('click',()=>handleSpell(btn.dataset.spell)));
 document.getElementById('btn-meditate').addEventListener('click',()=>{if(!active||gameOver||duel.attacker)return;setButtons(false);p1.isShielding=false;p1.state='idle';p1.mana=clamp(p1.mana+30,0,100);burst(p1.x,p1.y-55,'#74b9ff',28,'spark',4);ring(p1.x,p1.y-55,'#74b9ff',12);floatingTexts.push(new FloatingText(p1.x,p1.y-110,'+30 Mana','#74b9ff'));updateUI();setMessage('تأملت واستعدت مانا 💧','#74b9ff');playTone(650,.16,'sine',.035);setTimeout(startAITurn,1200)});
 
-function showRPSForPlayer(){ui.overlay.classList.add('show');ui.rpsMsg.style.borderColor='#ff5c5c';ui.rpsMsg.style.color='#fff';if(p1.hasLegilimens){duel.pendingAIChoice=randomChoice(['rock','paper','scissors']);ui.rpsMsg.innerHTML=`🔮 <b>Legilimens</b> كشف حركة الخصم: ${emojis[duel.pendingAIChoice]}`;ui.rpsMsg.style.borderColor='#b77cff';p1.hasLegilimens=false}else{ui.rpsMsg.textContent=`أنت تهاجم بـ ${duel.spell.name}. اختار بسرعة! ✊ ✋ ✌️`}}
-Object.entries(rpsButtons).forEach(([key,btn])=>btn.addEventListener('click',()=>resolveRPS(key)));
-function resolveRPS(playerChoice){if(!duel.attacker)return;const aiChoice=duel.pendingAIChoice||randomChoice(['rock','paper','scissors']);duel.pendingAIChoice=null;const attacker=duel.attacker;const defender=duel.defender;const playerIsAttacker=attacker===p1;let multiplier=1;
-  if(playerChoice===aiChoice){playTone(190,.1,'square',.025);ui.rpsMsg.textContent=`تعادل ${emojis[playerChoice]} ضد ${emojis[aiChoice]} — أعد الاختيار`;ui.rpsMsg.style.color='#f1c40f';ui.rpsMsg.style.borderColor='#f1c40f';duel.pendingAIChoice=aiChoice;return}
-  const playerWins=(playerChoice==='rock'&&aiChoice==='scissors')||(playerChoice==='paper'&&aiChoice==='rock')||(playerChoice==='scissors'&&aiChoice==='paper');
-  if(playerIsAttacker) multiplier=playerWins?1:.5; else multiplier=playerWins?.5:1;
-  ui.overlay.classList.remove('show');setMessage(playerIsAttacker?(playerWins?'ضربة كاملة! 🔥':'اتصدت! نصف الضرر 🛡️'):(playerWins?'دفاع ممتاز! نصف الضرر 🛡️':'فشل الدفاع! الضرر كامل 💥'),playerWins?'#65e6a4':'#ff8b8b');
-  const chosenSpell=duel.spell;projectiles.push(new Projectile(attacker,defender,chosenSpell,()=>executeAttackHit(attacker,defender,chosenSpell,multiplier)));duel.pendingAIChoice=null;playTone(playerWins?560:230,.13,'triangle',.03);
+function showRPSForPlayer(){
+  duel.rpsLocked=false;
+  ui.overlay.classList.add('show');
+  ui.rpsMsg.style.borderColor='#ff5c5c';
+  ui.rpsMsg.style.color='#fff';
+  if(p1.hasLegilimens){
+    duel.pendingAIChoice=randomChoice(['rock','paper','scissors']);
+    ui.rpsMsg.innerHTML=`🔮 <b>Legilimens</b> كشف حركة الخصم: ${emojis[duel.pendingAIChoice]}`;
+    ui.rpsMsg.style.borderColor='#b77cff';
+    p1.hasLegilimens=false;
+  }else{
+    duel.pendingAIChoice=null;
+    ui.rpsMsg.textContent=`أنت تهاجم بـ ${duel.spell.name}. اختار بسرعة! ✊ ✋ ✌️`;
+  }
 }
+
+function setRPSButtonsDisabled(disabled){
+  Object.values(rpsButtons).forEach(btn=>{ if(btn) btn.disabled=disabled; });
+}
+
+function resolveUnifiedRPS(playerChoice){
+  if(!duel.attacker || duel.rpsLocked || ui.overlay.classList.contains('show')===false) return;
+  duel.rpsLocked=true;
+  setRPSButtonsDisabled(true);
+
+  const attacker=duel.attacker;
+  const defender=duel.defender;
+  const attackerIsPlayer=attacker===p1;
+  const aiChoice=duel.pendingAIChoice ?? randomChoice(['rock','paper','scissors']);
+  const playerWins=(playerChoice==='rock'&&aiChoice==='scissors')||(playerChoice==='paper'&&aiChoice==='rock')||(playerChoice==='scissors'&&aiChoice==='paper');
+
+  if(playerChoice===aiChoice){
+    playTone(190,.1,'square',.025);
+    ui.rpsMsg.textContent=`تعادل ${emojis[playerChoice]} ضد ${emojis[aiChoice]} — جولة جديدة!`;
+    ui.rpsMsg.style.color='#f1c40f';
+    ui.rpsMsg.style.borderColor='#f1c40f';
+    // A tie starts a genuinely new RPS round. Do not reuse the same AI choice.
+    duel.pendingAIChoice=null;
+    setTimeout(()=>{
+      if(gameOver || !duel.attacker){return;}
+      duel.rpsLocked=false;
+      setRPSButtonsDisabled(false);
+      if(duel.attacker===p1 && p1.hasLegilimens){
+        duel.pendingAIChoice=randomChoice(['rock','paper','scissors']);
+        ui.rpsMsg.innerHTML=`🔮 <b>Legilimens</b> كشف حركة الخصم: ${emojis[duel.pendingAIChoice]}`;
+        ui.rpsMsg.style.borderColor='#b77cff';
+      }else{
+        ui.rpsMsg.textContent=attackerIsPlayer?`اختار حركة جديدة لمواجهة ${duel.spell.name} ✊ ✋ ✌️`:`الخصم ما زال يهاجم — دافع بحركة جديدة! ✊ ✋ ✌️`;
+        ui.rpsMsg.style.color='#fff';
+        ui.rpsMsg.style.borderColor='#ff5c5c';
+      }
+    },420);
+    return;
+  }
+
+  duel.pendingAIChoice=null;
+  const multiplier=attackerIsPlayer?(playerWins?1:.5):(playerWins?.5:1);
+  ui.rpsMsg.innerHTML=`${emojis[playerChoice]} ضد ${emojis[aiChoice]} — <b>${playerWins?'أنت كسبت المواجهة':'الخصم كسب المواجهة'}</b>`;
+  ui.rpsMsg.style.color=playerWins?'#65e6a4':'#ff8b8b';
+  ui.rpsMsg.style.borderColor=playerWins?'#65e6a4':'#ff5c5c';
+  playTone(playerWins?560:230,.13,'triangle',.03);
+
+  setTimeout(()=>{
+    if(gameOver || !duel.attacker) return;
+    ui.overlay.classList.remove('show');
+    setRPSButtonsDisabled(false);
+    setMessage(attackerIsPlayer?(playerWins?'ضربة كاملة! 🔥':'اتصدت! نصف الضرر 🛡️'):(playerWins?'دفاع ممتاز! نصف الضرر 🛡️':'فشل الدفاع! الضرر كامل 💥'),playerWins?'#65e6a4':'#ff8b8b');
+    const chosenSpell=duel.spell;
+    projectiles.push(new Projectile(attacker,defender,chosenSpell,()=>executeAttackHit(attacker,defender,chosenSpell,multiplier)));
+  },520);
+}
+
+// Bind the RPS buttons once.
+Object.entries(rpsButtons).forEach(([key,btn])=>btn.addEventListener('click',()=>resolveUnifiedRPS(key)));
 
 function executeAttackHit(caster,target,spell,multiplier){caster.consumeMana(spell);let damage=Math.floor(spell.damage*multiplier);if(caster.confundoTurns>0){damage=Math.floor(damage*.5);caster.confundoTurns=0}if(target.isShielding)damage=Math.floor(damage*.5);damage=clamp(damage,0,100);
   target.health=clamp(target.health-damage,0,100);target.hitFlash=1;floatingTexts.push(new FloatingText(target.x,target.y-95,`-${damage}`,'#ff6576'));burst(target.x,target.y-65,spell.color,spell.type==='attack'?16:8,'spark',4);updateUI();
@@ -550,19 +678,9 @@ function startAITurn(){if(gameOver)return;setButtons(false);p2.isShielding=false
     // Prefer healing / mana / utility when they are strategically useful, otherwise attack.
     const fn=choices[0]?.name?choices[0]:randomChoice(choices);fn();
   },850)}
-function executeSpellAI(caster,target,spell){duel.attacker=caster;duel.defender=target;duel.spell=spell;caster.state='casting';caster.castGlow=1;setMessage(`الخصم يجهز ${spell.name}... دافع! ⚔️`,'#ff8b8b');setTimeout(()=>{ui.overlay.classList.add('show');ui.rpsMsg.style.borderColor='#ff5c5c';if(target.hasLegilimens){duel.pendingAIChoice=randomChoice(['rock','paper','scissors']);ui.rpsMsg.innerHTML=`🔮 <b>Legilimens</b> كشف حركة الخصم: ${emojis[duel.pendingAIChoice]}`;ui.rpsMsg.style.borderColor='#b77cff';target.hasLegilimens=false}else{duel.pendingAIChoice=null;ui.rpsMsg.textContent=`${spell.name} قادم إليك! اختار دفاعك ✊ ✋ ✌️`}},550)}
+function executeSpellAI(caster,target,spell){duel.attacker=caster;duel.defender=target;duel.spell=spell;duel.rpsLocked=false;caster.state='casting';caster.castGlow=1;setMessage(`الخصم يجهز ${spell.name}... دافع! ⚔️`,'#ff8b8b');setTimeout(()=>{ui.overlay.classList.add('show');setRPSButtonsDisabled(false);ui.rpsMsg.style.borderColor='#ff5c5c';if(target.hasLegilimens){duel.pendingAIChoice=randomChoice(['rock','paper','scissors']);ui.rpsMsg.innerHTML=`🔮 <b>Legilimens</b> كشف حركة الخصم: ${emojis[duel.pendingAIChoice]}`;ui.rpsMsg.style.borderColor='#b77cff';target.hasLegilimens=false}else{duel.pendingAIChoice=null;ui.rpsMsg.textContent=`${spell.name} قادم إليك! اختار دفاعك ✊ ✋ ✌️`}},550)}
 
-// AI attack uses the same buttons; resolveRPS currently assumes user is attacker, so handle AI separately.
-const originalResolveRPS=resolveRPS;
-Object.entries(rpsButtons).forEach(([key,btn])=>{btn.replaceWith(btn.cloneNode(true));rpsButtons[key]=document.getElementById(`rps-${key}`)});
-Object.entries(rpsButtons).forEach(([key,btn])=>btn.addEventListener('click',()=>resolveUnifiedRPS(key)));
-function resolveUnifiedRPS(playerChoice){if(!duel.attacker)return;const aiChoice=duel.pendingAIChoice||randomChoice(['rock','paper','scissors']);duel.pendingAIChoice=null;const attacker=duel.attacker,defender=duel.defender,attackerIsPlayer=attacker===p1;
-  if(playerChoice===aiChoice){playTone(190,.1,'square',.025);ui.rpsMsg.textContent=`تعادل ${emojis[playerChoice]} ضد ${emojis[aiChoice]} — أعد الاختيار`;ui.rpsMsg.style.color='#f1c40f';ui.rpsMsg.style.borderColor='#f1c40f';duel.pendingAIChoice=aiChoice;return}
-  const playerWins=(playerChoice==='rock'&&aiChoice==='scissors')||(playerChoice==='paper'&&aiChoice==='rock')||(playerChoice==='scissors'&&aiChoice==='paper');
-  const multiplier=attackerIsPlayer?(playerWins?1:.5):(playerWins?.5:1);
-  ui.overlay.classList.remove('show');setMessage(attackerIsPlayer?(playerWins?'ضربة كاملة! 🔥':'اتصدت! نصف الضرر 🛡️'):(playerWins?'دفاع ممتاز! نصف الضرر 🛡️':'فشل الدفاع! الضرر كامل 💥'),playerWins?'#65e6a4':'#ff8b8b');
-  projectiles.push(new Projectile(attacker,defender,duel.spell,()=>executeAttackHit(attacker,defender,duel.spell,multiplier)));playTone(playerWins?560:230,.13,'triangle',.03);
-}
+// Unified RPS handler is defined and bound above.
 
 function endGame(title,subtitle){if(gameOver)return;gameOver=true;active=false;setButtons(false);ui.overlay.classList.remove('show');ui.resultTitle.textContent=title;ui.resultSubtitle.textContent=subtitle;ui.gameOver.classList.add('show');burst(canvas.width/2,canvas.height*.4,'#e9c46a',70,'spark',8);playTone(title.startsWith('أنت')?820:180,.35,'sine',.045)}
 
