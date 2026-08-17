@@ -3,53 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hogwarts Battle - Visual Effects Edition</title>
+    <title>Hogwarts Magic Duel</title>
     <style>
         body { margin: 0; background-color: #0d1117; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; color: white; user-select: none; touch-action: none; }
         
-        #selection-screen { position: absolute; width: 100%; height: 100%; background-color: rgba(0,0,0,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 60; transition: opacity 0.5s; }
-        #selection-screen h1 { font-size: 32px; margin-bottom: 30px; text-shadow: 0 0 10px #fff; text-align: center;}
+        #selection-screen { position: absolute; width: 100%; height: 100%; background: radial-gradient(circle at center, #1a252f 0%, #0d1117 100%); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 60; transition: opacity 0.5s; }
+        #selection-screen h1 { font-size: 32px; margin-bottom: 30px; text-shadow: 0 0 15px rgba(255,255,255,0.5); text-align: center;}
         .house-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; max-width: 600px; padding: 20px; }
-        .house-btn { background-color: #222; border: 3px solid #555; border-radius: 15px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+        .house-btn { background-color: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.2); border-radius: 15px; padding: 25px; text-align: center; cursor: pointer; transition: all 0.3s; backdrop-filter: blur(5px); }
+        .house-btn:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
         .house-btn:active { transform: scale(0.95); }
-        .house-emoji { font-size: 50px; display: block; margin-bottom: 10px; }
+        .house-emoji { font-size: 55px; display: block; margin-bottom: 10px; filter: drop-shadow(0 0 10px rgba(255,255,255,0.3));}
         
-        #lion-pick { border-color: #c0392b; background-color: rgba(192, 57, 43, 0.2); }
-        #snake-pick { border-color: #27ae60; background-color: rgba(39, 174, 96, 0.2); }
-        #badger-pick { border-color: #f1c40f; background-color: rgba(241, 196, 15, 0.2); }
-        #eagle-pick { border-color: #3498db; background-color: rgba(52, 152, 219, 0.2); }
+        #lion-pick:hover { border-color: #e74c3c; background-color: rgba(231, 76, 60, 0.1); }
+        #snake-pick:hover { border-color: #2ecc71; background-color: rgba(46, 204, 113, 0.1); }
+        #badger-pick:hover { border-color: #f1c40f; background-color: rgba(241, 196, 15, 0.1); }
+        #eagle-pick:hover { border-color: #3498db; background-color: rgba(52, 152, 219, 0.1); }
 
         #game-screen { display: none; position: relative; width: 100%; height: 100%; flex-direction: column; align-items: center; opacity: 0; transition: opacity 0.5s; }
         #ui-top { position: absolute; top: 15px; width: 100%; max-width: 800px; display: flex; justify-content: space-between; padding: 0 15px; box-sizing: border-box; z-index: 10; }
-        .stats-container { width: 42%; display: flex; flex-direction: column; gap: 5px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 10px; border: 1px solid #444;}
-        .bar-border { width: 100%; height: 15px; background-color: #222; border: 2px solid #000; border-radius: 8px; position: relative; overflow: hidden; }
-        .bar-fill { width: 100%; height: 100%; transition: width 0.3s ease-out; float: left; }
-        .hp-fill { background-color: #e74c3c; box-shadow: 0 0 10px #e74c3c; }
-        .mana-fill { background-color: #3498db; box-shadow: 0 0 10px #3498db; }
-        .wizard-label { font-size: 16px; font-weight: bold; margin-bottom: 5px; text-shadow: 0 0 5px #000; }
+        .stats-container { width: 42%; display: flex; flex-direction: column; gap: 6px; background: rgba(0,0,0,0.6); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(4px);}
+        .bar-border { width: 100%; height: 16px; background-color: #111; border-radius: 8px; position: relative; overflow: hidden; box-shadow: inset 0 0 5px #000;}
+        .bar-fill { width: 100%; height: 100%; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); float: left; }
+        .hp-fill { background: linear-gradient(90deg, #c0392b, #e74c3c); }
+        .mana-fill { background: linear-gradient(90deg, #2980b9, #3498db); }
+        .wizard-label { font-size: 16px; font-weight: bold; margin-bottom: 2px; text-shadow: 1px 1px 2px #000; letter-spacing: 1px;}
 
-        canvas { background-color: #1a252f; border: 3px solid #34495e; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.8); max-width: 95%; max-height: 50vh; margin-top: 80px;}
+        canvas { background-color: #0a0f14; border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); max-width: 95%; max-height: 50vh; margin-top: 90px;}
 
-        #turn-controls { width: 100%; max-width: 900px; background-color: rgba(20, 24, 34, 0.95); border-top: 3px solid #444; border-radius: 15px 15px 0 0; padding: 15px; box-sizing: border-box; z-index: 15; display: flex; flex-direction: column; align-items: center; gap: 10px; position: absolute; bottom: 0; }
-        #turn-message { font-size: 18px; font-weight: bold; text-align: center; color: #f1c40f; min-height: 25px;}
+        #turn-controls { width: 100%; max-width: 800px; background: linear-gradient(to top, rgba(15, 20, 30, 1), rgba(15, 20, 30, 0.8)); border-top: 1px solid rgba(255,255,255,0.1); border-radius: 20px 20px 0 0; padding: 15px 10px 25px 10px; box-sizing: border-box; z-index: 15; display: flex; flex-direction: column; align-items: center; gap: 12px; position: absolute; bottom: 0; backdrop-filter: blur(10px);}
+        #turn-message { font-size: 18px; font-weight: bold; text-align: center; color: #f1c40f; min-height: 25px; text-shadow: 0 0 8px rgba(241, 196, 15, 0.5);}
         #action-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-        .btn { padding: 8px 15px; background-color: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 8px; font-size: 14px; font-weight: bold; color: white; cursor: pointer; transition: all 0.2s;}
-        .btn:active { transform: scale(0.95); }
-        .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .btn { padding: 10px 14px; background-color: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; font-size: 14px; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s; font-family: inherit;}
+        .btn:active { transform: scale(0.92); }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(100%);}
         
-        .btn-attack { border-color: #e74c3c; }
-        .btn-utility { border-color: #9b59b6; }
-        .btn-defense { border-color: #3498db; }
-        .btn-heal { border-color: #2ecc71; }
+        .btn-attack { border-bottom: 3px solid #e74c3c; }
+        .btn-utility { border-bottom: 3px solid #9b59b6; }
+        .btn-defense { border-bottom: 3px solid #3498db; }
+        .btn-heal { border-bottom: 3px solid #2ecc71; }
 
-        #rps-overlay { position: absolute; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 40; }
-        #rps-overlay h2 { color: #fff; text-align: center; margin-bottom: 10px;}
-        #rps-attacker-msg { color: #e74c3c; font-size: 20px; font-weight: bold; margin-bottom: 20px; text-align: center; }
-        #rps-btns { display: flex; gap: 20px; }
-        .rps-btn { font-size: 60px; background: none; border: none; cursor: pointer; transition: transform 0.2s; }
-        .rps-btn:active { transform: scale(0.8); }
+        #rps-overlay { position: absolute; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 40; backdrop-filter: blur(4px);}
+        #rps-overlay h2 { color: #fff; text-align: center; margin-bottom: 10px; font-size: 28px; text-shadow: 0 0 10px rgba(255,255,255,0.5);}
+        #rps-attacker-msg { color: #e74c3c; font-size: 20px; font-weight: bold; margin-bottom: 30px; text-align: center; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 10px;}
+        #rps-btns { display: flex; gap: 25px; }
+        .rps-btn { font-size: 65px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; width: 100px; height: 100px; cursor: pointer; transition: all 0.2s; display: flex; justify-content: center; align-items: center; padding-bottom: 5px;}
+        .rps-btn:active { transform: scale(0.85); background: rgba(255,255,255,0.3);}
 
-        #game-over { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 30px; font-weight: bold; display: none; text-align: center; z-index: 50; background: rgba(0,0,0,0.95); padding: 30px; border-radius: 15px; border: 3px solid #f1c40f; box-shadow: 0 0 20px #f1c40f; }
+        #game-over { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 30px; font-weight: bold; display: none; text-align: center; z-index: 50; background: rgba(15, 20, 30, 0.95); padding: 40px; border-radius: 20px; border: 2px solid #f1c40f; box-shadow: 0 0 30px rgba(241, 196, 15, 0.5); }
     </style>
 </head>
 <body>
@@ -69,21 +70,21 @@
             <div dir="ltr" class="stats-container">
                 <div class="wizard-label" id="p1-label" style="text-align: right;">🧙‍♂️ أنت</div>
                 <div class="bar-border"><div id="p1-hp" class="bar-fill hp-fill"></div></div>
-                <div class="bar-border" style="height: 8px; border-color: #555;"><div id="p1-mana" class="bar-fill mana-fill"></div></div>
+                <div class="bar-border" style="height: 6px;"><div id="p1-mana" class="bar-fill mana-fill"></div></div>
             </div>
             <div dir="ltr" class="stats-container">
                 <div class="wizard-label" id="p2-label" style="text-align: left;">🧙‍♀️ الكمبيوتر</div>
                 <div class="bar-border"><div id="p2-hp" class="bar-fill hp-fill"></div></div>
-                <div class="bar-border" style="height: 8px; border-color: #555;"><div id="p2-mana" class="bar-fill mana-fill"></div></div>
+                <div class="bar-border" style="height: 6px;"><div id="p2-mana" class="bar-fill mana-fill"></div></div>
             </div>
         </div>
 
-        <div id="game-over">النتيجة<br><button onclick="location.reload()" style="padding: 10px 20px; font-size: 18px; margin-top: 15px; cursor: pointer; background:#f1c40f; border:none; border-radius:5px; font-weight:bold;">مبارزة جديدة</button></div>
+        <div id="game-over">النتيجة<br><button onclick="location.reload()" style="padding: 12px 25px; font-size: 18px; margin-top: 20px; cursor: pointer; background:#f1c40f; color:#000; border:none; border-radius:8px; font-weight:bold;">مبارزة جديدة</button></div>
 
         <canvas id="gameCanvas" width="800" height="400"></canvas>
 
         <div id="rps-overlay">
-            <h2>المواجهة! التعادل يعيد الكرة🤝</h2>
+            <h2>المواجهة! التعادل يعيد الكرة 🤝</h2>
             <div id="rps-attacker-msg">اختر حجر ورقة مقص ✊✋✌️</div>
             <div id="rps-btns">
                 <button class="rps-btn" id="rps-rock">✊</button>
@@ -102,7 +103,7 @@
                 <button class="btn btn-utility" id="btn-confundo">Confundo (10💧)</button>
                 <button class="btn btn-defense" id="btn-protego">Protego (10💧)</button>
                 <button class="btn btn-heal" id="btn-episkey">Episkey (20💧)</button>
-                <button class="btn" id="btn-meditate">Tämal (+30💧)</button>
+                <button class="btn" id="btn-meditate" style="border-bottom: 3px solid #7f8c8d;">Tämal (+30💧)</button>
             </div>
         </div>
     </div>
@@ -124,6 +125,7 @@
         let isGameOver = false, gameActive = false;
         let p1, p2;
         let turnContext = { attacker: null, defender: null, spell: null, currentTurn: 'player' };
+        let screenShake = 0; // متغير اهتزاز الشاشة
 
         const houses = {
             lion: { name: 'جريفندور', color: '#e74c3c', emoji: '🧙‍♂️' },
@@ -133,31 +135,60 @@
         };
 
         const spellBook = {
-            incendio: { name: 'Incendio', damage: 30, cost: 20, color: '#e67e22', type: 'attack', particleType: 'fire' },
-            rictusempra: { name: 'Rictusempra', damage: 10, cost: 15, color: '#f1c40f', type: 'attack', dotDamage: 10, dotTurns: 3, particleType: 'spark' },
-            petrificus: { name: 'Petrificus Totalus', damage: 5, cost: 25, color: '#bdc3c7', type: 'attack', stunTurns: 1, particleType: 'beam' },
+            incendio: { name: 'Incendio', damage: 30, cost: 20, color: '#e67e22', type: 'attack', particleType: 'fire', shake: 15 },
+            rictusempra: { name: 'Rictusempra', damage: 10, cost: 15, color: '#f1c40f', type: 'attack', dotDamage: 10, dotTurns: 3, particleType: 'spark', shake: 5 },
+            petrificus: { name: 'Petrificus Totalus', damage: 5, cost: 25, color: '#bdc3c7', type: 'attack', stunTurns: 1, particleType: 'beam', shake: 5 },
             legilimens: { name: 'Legilimens', damage: 0, cost: 15, color: '#9b59b6', type: 'utility', legilimensActive: true },
             confundo: { name: 'Confundo', damage: 0, cost: 10, color: '#8e44ad', type: 'utility', confundoTurns: 1 },
             protego: { name: 'Protego', damage: 0, cost: 10, color: '#3498db', type: 'defense' },
             episkey: { name: 'Episkey', heal: 30, cost: 20, color: '#2ecc71', type: 'heal' }
         };
 
-        // --- نظام الجزيئات (Particle System) ---
+        // --- المؤثرات البصرية (VFX Classes) ---
         let particles = [];
         let projectiles = [];
+        let floatingTexts = [];
+        let ambientDust = [];
+
+        // تهيئة الغبار السحري في الخلفية
+        for(let i=0; i<30; i++) {
+            ambientDust.push({
+                x: Math.random() * 800, y: Math.random() * 400,
+                size: Math.random() * 2 + 0.5,
+                vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5,
+                alpha: Math.random() * 0.5 + 0.1
+            });
+        }
+
+        // كلاس الأرقام الطائرة (Damage Popups)
+        class FloatingText {
+            constructor(x, y, text, color) {
+                this.x = x; this.y = y - 20; this.text = text; this.color = color;
+                this.life = 1.0; this.vy = -1.5; // يطير لفوق
+            }
+            update() { this.y += this.vy; this.life -= 0.02; }
+            draw() {
+                ctx.save(); ctx.globalAlpha = Math.max(0, this.life);
+                ctx.font = 'bold 28px Arial'; ctx.textAlign = 'center';
+                ctx.fillStyle = this.color;
+                ctx.shadowColor = 'black'; ctx.shadowBlur = 4; ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2;
+                ctx.fillText(this.text, this.x, this.y);
+                ctx.restore();
+            }
+        }
 
         class Particle {
             constructor(x, y, color, type) {
                 this.x = x; this.y = y; this.color = color; this.type = type;
-                this.size = Math.random() * 5 + 2;
-                this.vx = (Math.random() - 0.5) * 6;
-                this.vy = (Math.random() - 0.5) * 6;
+                this.size = Math.random() * 6 + 2;
+                this.vx = (Math.random() - 0.5) * 8;
+                this.vy = (Math.random() - 0.5) * 8;
                 this.life = 1.0;
-                this.decay = Math.random() * 0.05 + 0.02;
+                this.decay = Math.random() * 0.04 + 0.02;
             }
             update() {
                 this.x += this.vx; this.y += this.vy;
-                if(this.type === 'fire') { this.vy -= 0.1; this.size *= 0.95; } // النار تطلع لفوق وتصغر
+                if(this.type === 'fire') { this.vy -= 0.15; this.size *= 0.93; } 
                 this.life -= this.decay;
             }
             draw() {
@@ -169,11 +200,11 @@
         }
 
         class Projectile {
-            constructor(startX, startY, targetX, targetY, color, type, onHit) {
+            constructor(startX, startY, targetX, targetY, color, type, spellData, onHit) {
                 this.x = startX; this.y = startY;
                 this.targetX = targetX; this.targetY = targetY;
-                this.color = color; this.type = type; this.onHit = onHit;
-                this.speed = 15;
+                this.color = color; this.type = type; this.spellData = spellData; this.onHit = onHit;
+                this.speed = 12;
                 const angle = Math.atan2(targetY - startY, targetX - startX);
                 this.vx = Math.cos(angle) * this.speed;
                 this.vy = Math.sin(angle) * this.speed;
@@ -181,19 +212,18 @@
             }
             update() {
                 this.x += this.vx; this.y += this.vy;
-                // إنشاء ديل (Trail) للمقذوف
                 particles.push(new Particle(this.x, this.y, this.color, this.type));
                 
                 const dist = Math.hypot(this.targetX - this.x, this.targetY - this.y);
                 if (dist < this.speed) {
                     this.active = false;
-                    // انفجار عند الوصول
-                    for(let i=0; i<20; i++) particles.push(new Particle(this.x, this.y, this.color, this.type));
+                    for(let i=0; i<30; i++) particles.push(new Particle(this.x, this.y, this.color, this.type));
+                    if(this.spellData && this.spellData.shake) screenShake = this.spellData.shake; // تشغيل اهتزاز الشاشة
                     if(this.onHit) this.onHit();
                 }
             }
             draw() {
-                ctx.shadowBlur = 15; ctx.shadowColor = this.color; ctx.fillStyle = '#fff';
+                ctx.shadowBlur = 20; ctx.shadowColor = this.color; ctx.fillStyle = '#fff';
                 ctx.beginPath(); ctx.arc(this.x, this.y, 8, 0, Math.PI*2); ctx.fill();
                 ctx.shadowBlur = 0;
             }
@@ -211,37 +241,33 @@
             draw() {
                 const cx = this.x + this.width / 2; const cy = this.y + this.height / 2;
                 
-                // درع Protego
                 if (this.isShielding) {
                     ctx.save();
                     ctx.beginPath(); ctx.arc(cx, cy, 75, 0, Math.PI * 2);
                     ctx.strokeStyle = this.house.color; ctx.lineWidth = 3;
-                    ctx.setLineDash([10, 5]); // درع منقط
-                    ctx.lineDashOffset = -Date.now() / 20; // دوران الدرع
-                    ctx.shadowColor = this.house.color; ctx.shadowBlur = 15;
+                    ctx.setLineDash([15, 10]); 
+                    ctx.lineDashOffset = -Date.now() / 30; 
+                    ctx.shadowColor = this.house.color; ctx.shadowBlur = 20;
                     ctx.stroke();
                     ctx.fillStyle = this.house.color.replace('1)', '0.1)'); ctx.fill();
                     ctx.restore();
                 }
 
-                // رسم الساحر
                 ctx.save();
-                ctx.shadowColor = this.house.color; ctx.shadowBlur = 20;
-                ctx.font = '80px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.shadowColor = this.house.color; ctx.shadowBlur = 25;
+                ctx.font = '85px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.fillStyle = 'white'; 
                 ctx.translate(cx, cy);
                 if (!this.isFacingRight) ctx.scale(-1, 1);
                 ctx.fillText(this.house.emoji, 0, 0); 
                 ctx.restore();
 
-                // تأثيرات الحالة (Status UI) فوق الرأس
-                let statusY = this.y - 10;
-                ctx.font = '24px Arial'; ctx.textAlign = 'center';
-                if (this.stunTurns > 0) { ctx.fillText('💤', cx, statusY); statusY -= 25; }
-                if (this.confundoTurns > 0) { ctx.fillText('💫', cx, statusY); statusY -= 25; }
+                let statusY = this.y - 15;
+                ctx.font = '28px Arial'; ctx.textAlign = 'center'; ctx.shadowBlur = 0;
+                if (this.stunTurns > 0) { ctx.fillText('💤', cx, statusY); statusY -= 30; }
+                if (this.confundoTurns > 0) { ctx.fillText('💫', cx, statusY); statusY -= 30; }
                 if (this.bleedTurns > 0) { 
                     ctx.fillText('🔥', cx, statusY); 
-                    // جزيئات نار على الأرض
                     if(Math.random() < 0.2) particles.push(new Particle(cx + (Math.random()-0.5)*50, this.y + this.height, '#e67e22', 'fire'));
                 }
             }
@@ -249,7 +275,7 @@
             consumeMana(spell) { this.mana -= spell.cost; if(this.mana < 0) this.mana = 0; }
         }
 
-        // --- وظائف اللعبة الأساسية ---
+        // --- وظائف اللعبة ---
         function updateStatsUI() {
             ui.p1Hp.style.width = p1.health + '%'; ui.p1Mana.style.width = p1.mana + '%';
             ui.p2Hp.style.width = p2.health + '%'; ui.p2Mana.style.width = p2.mana + '%';
@@ -259,15 +285,14 @@
             ui.selection.style.opacity = '0';
             setTimeout(() => {
                 ui.selection.style.display = 'none'; ui.game.style.display = 'flex'; ui.game.style.opacity = '1';
-                
                 const p1Data = houses[houseKey];
                 ui.p1Label.innerText = `🧙‍♂️ أنت (${p1Data.name})`;
-                ui.p1Label.style.color = p1Data.color; ui.p1Hp.style.backgroundColor = p1Data.color;
+                ui.p1Label.style.color = p1Data.color; ui.p1Hp.style.background = p1Data.color;
                 
                 const other = Object.keys(houses).filter(k => k !== houseKey);
                 const p2Data = houses[other[Math.floor(Math.random() * other.length)]];
                 ui.p2Label.innerText = `🧙‍♀️ الكمبيوتر (${p2Data.name})`;
-                ui.p2Label.style.color = p2Data.color; ui.p2Hp.style.backgroundColor = p2Data.color;
+                ui.p2Label.style.color = p2Data.color; ui.p2Hp.style.background = p2Data.color;
 
                 p1 = new Wizard(100, p1Data, true); 
                 p2 = new Wizard(canvas.width - 200, p2Data, false); 
@@ -292,11 +317,9 @@
             if (spell.type === 'attack') {
                 turnContext.attacker = p1; turnContext.defender = p2; turnContext.spell = spell;
                 p1.isShielding = false; toggleButtons(false); ui.rps.overlay.style.display = 'flex';
-                
                 if (legilimensTarget === p2) {
                     pendingAIChoice = ['rock', 'paper', 'scissors'][Math.floor(Math.random() * 3)];
-                    const rpsEmojis = { rock: '✊', paper: '✋', scissors: '✌️' };
-                    ui.rps.attackerMsg.innerText = `🔮 أفكار مكشوفة! الخصم سيلعب: ${rpsEmojis[pendingAIChoice]}!`;
+                    ui.rps.attackerMsg.innerHTML = `🔮 أفكار مكشوفة! الخصم سيلعب: <b>${ {rock:'✊',paper:'✋',scissors:'✌️'}[pendingAIChoice] }</b>`;
                     ui.rps.attackerMsg.style.color = '#9b59b6'; legilimensTarget = null;
                 } else {
                     ui.rps.attackerMsg.innerText = `أنت تهاجم بـ ${spell.name}! اختر بسرعة ✊✋✌️`;
@@ -313,8 +336,9 @@
         ui.btns.meditate.addEventListener('click', () => {
             if (isGameOver || turnContext.currentTurn !== 'player') return;
             p1.mana += 30; if (p1.mana > 100) p1.mana = 100;
-            ui.message.innerText = 'تأملت واستعدت مانا 💧.'; p1.isShielding = false; updateStatsUI(); toggleButtons(false);
-            setTimeout(startAITurn, 1500);
+            ui.message.innerText = 'تأملت واستعدت مانا 💧.'; p1.isShielding = false; 
+            floatingTexts.push(new FloatingText(p1.x + p1.width/2, p1.y, '+30 Mana', '#3498db'));
+            updateStatsUI(); toggleButtons(false); setTimeout(startAITurn, 1500);
         });
 
         function handleRPS(playerChoice) {
@@ -341,13 +365,12 @@
                     else { ui.message.innerText += ' فشلت💥! ضرره كامل.'; damageMultiplier = 1; }
                 }
                 
-                // إطلاق المقذوف بدل الضرر الفوري
                 const startX = turnContext.attacker.x + turnContext.attacker.width/2;
                 const startY = turnContext.attacker.y + turnContext.attacker.height/2;
                 const endX = turnContext.defender.x + turnContext.defender.width/2;
                 const endY = turnContext.defender.y + turnContext.defender.height/2;
 
-                projectiles.push(new Projectile(startX, startY, endX, endY, turnContext.spell.color, turnContext.spell.particleType, () => {
+                projectiles.push(new Projectile(startX, startY, endX, endY, turnContext.spell.color, turnContext.spell.particleType, turnContext.spell, () => {
                     executeAttackHit(turnContext.attacker, turnContext.defender, turnContext.spell, damageMultiplier);
                 }));
 
@@ -362,7 +385,12 @@
             if (caster.confundoTurns > 0) { finalDamage *= 0.5; caster.confundoTurns = 0; }
             if (target.isShielding) finalDamage *= 0.5;
             
+            finalDamage = Math.floor(finalDamage);
             target.health -= finalDamage; if (target.health < 0) target.health = 0;
+            
+            // إضافة النص الطائر للضرر
+            floatingTexts.push(new FloatingText(target.x + target.width/2, target.y, `-${finalDamage}`, '#e74c3c'));
+            
             updateStatsUI();
 
             if (spell.dotTurns) { target.bleedTurns = spell.dotTurns; target.bleedDamage = spell.dotDamage; }
@@ -373,7 +401,7 @@
         }
 
         function spawnSelfParticles(wizard, color) {
-            for(let i=0; i<30; i++) particles.push(new Particle(wizard.x + wizard.width/2, wizard.y + wizard.height, color, 'spark'));
+            for(let i=0; i<40; i++) particles.push(new Particle(wizard.x + wizard.width/2, wizard.y + wizard.height/2, color, 'spark'));
         }
 
         function executeDefense(caster, spell) {
@@ -387,13 +415,14 @@
             caster.consumeMana(spell); caster.isShielding = false; caster.health += spell.heal;
             if (caster.health > 100) caster.health = 100; updateStatsUI();
             ui.message.innerText = `تعويذة Episkey ✨ (علاج).`;
+            floatingTexts.push(new FloatingText(caster.x + caster.width/2, caster.y, `+${spell.heal} HP`, '#2ecc71'));
             toggleButtons(false); spawnSelfParticles(caster, spell.color);
             if (caster === p1) setTimeout(startAITurn, 1500); else startP1Turn();
         }
 
         function executeLegilimens(caster, target, spell) {
             caster.consumeMana(spell); caster.isShielding = false; updateStatsUI();
-            ui.message.innerText = `تعويذة Legilimens 🔮 (قراءة أفكار الهجمة الجاية).`;
+            ui.message.innerText = `تعويذة Legilimens 🔮 (قراءة الأفكار).`;
             legilimensTarget = target; toggleButtons(false); spawnSelfParticles(target, spell.color);
             if (caster === p1) setTimeout(startAITurn, 1500); else startP1Turn();
         }
@@ -408,7 +437,9 @@
         function applyTurnEffects(wizard) {
             if (wizard.bleedTurns > 0) {
                 wizard.health -= wizard.bleedDamage; if (wizard.health < 0) wizard.health = 0;
-                ui.message.innerText = `🩸 ينزف وينقص 10 HP.`; wizard.bleedTurns--; updateStatsUI(); return true;
+                ui.message.innerText = `🩸 ينزف وينقص ${wizard.bleedDamage} HP.`; wizard.bleedTurns--; 
+                floatingTexts.push(new FloatingText(wizard.x + wizard.width/2, wizard.y, `-${wizard.bleedDamage}`, '#e67e22'));
+                updateStatsUI(); return true;
             }
             return false;
         }
@@ -428,7 +459,11 @@
 
             setTimeout(() => {
                 if (p2.health < 40 && p2.canCast(spellBook.episkey)) { executeHeal(p2, spellBook.episkey); }
-                else if (p2.mana < 20) { p2.mana += 30; if (p2.mana > 100) p2.mana = 100; ui.message.innerText = 'الكمبيوتر يتأمل 💧.'; updateStatsUI(); setTimeout(startP1Turn, 1500); }
+                else if (p2.mana < 20) { 
+                    p2.mana += 30; if (p2.mana > 100) p2.mana = 100; ui.message.innerText = 'الكمبيوتر يتأمل 💧.'; 
+                    floatingTexts.push(new FloatingText(p2.x + p2.width/2, p2.y, '+30 Mana', '#3498db'));
+                    updateStatsUI(); setTimeout(startP1Turn, 1500); 
+                }
                 else if (p1.bleedTurns > 0 && p2.canCast(spellBook.petrificus)) { executeSpellAI(p2, p1, spellBook.petrificus); }
                 else if (p1.isShielding && Math.random() < 0.5 && p2.canCast(spellBook.legilimens)) { executeLegilimens(p2, p1, spellBook.legilimens); }
                 else if (Math.random() < 0.3 && p2.canCast(spellBook.confundo)) { executeConfundo(p2, p1, spellBook.confundo); }
@@ -465,23 +500,39 @@
         Object.keys(ui.btns).forEach(key => { if(ui.btns[key]) ui.btns[key].addEventListener('click', () => { if(key!=='meditate') handleP1Action(key); }); });
 
         function drawBackground() {
-            // سماء ليلية
-            ctx.fillStyle = '#111827'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            // أرضية حجرية
-            ctx.fillStyle = '#1f2937'; ctx.fillRect(0, canvas.height - 80, canvas.width, 80);
-            ctx.strokeStyle = '#374151'; ctx.lineWidth = 2;
-            for(let i=0; i<canvas.width; i+=50) { ctx.beginPath(); ctx.moveTo(i, canvas.height-80); ctx.lineTo(i-20, canvas.height); ctx.stroke(); }
-            // خط الأفق
+            ctx.fillStyle = '#0a0f14'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // الغبار السحري
+            ambientDust.forEach(dust => {
+                dust.x += dust.vx; dust.y += dust.vy;
+                if(dust.x < 0) dust.x = canvas.width; if(dust.x > canvas.width) dust.x = 0;
+                if(dust.y < 0) dust.y = canvas.height; if(dust.y > canvas.height) dust.y = 0;
+                ctx.globalAlpha = dust.alpha; ctx.fillStyle = '#bdc3c7';
+                ctx.beginPath(); ctx.arc(dust.x, dust.y, dust.size, 0, Math.PI*2); ctx.fill();
+            });
+            ctx.globalAlpha = 1.0;
+            // الأرضية
+            ctx.fillStyle = '#141c24'; ctx.fillRect(0, canvas.height - 80, canvas.width, 80);
+            ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 2;
+            for(let i=0; i<canvas.width; i+=40) { ctx.beginPath(); ctx.moveTo(i, canvas.height-80); ctx.lineTo(i-30, canvas.height); ctx.stroke(); }
             ctx.beginPath(); ctx.moveTo(0, canvas.height-80); ctx.lineTo(canvas.width, canvas.height-80); ctx.stroke();
         }
 
         function animate() {
             if(!gameActive) return;
-            drawBackground();
             
+            ctx.save();
+            // تطبيق اهتزاز الشاشة
+            if (screenShake > 0) {
+                const dx = (Math.random() - 0.5) * screenShake;
+                const dy = (Math.random() - 0.5) * screenShake;
+                ctx.translate(dx, dy);
+                screenShake *= 0.85; // تقليل الاهتزاز تدريجياً
+                if (screenShake < 0.5) screenShake = 0;
+            }
+
+            drawBackground();
             if (p1 && p2) { p1.draw(); p2.draw(); }
 
-            // تحديث ورسم المقذوفات والجزيئات
             for (let i = projectiles.length - 1; i >= 0; i--) {
                 projectiles[i].update(); projectiles[i].draw();
                 if (!projectiles[i].active) projectiles.splice(i, 1);
@@ -490,7 +541,12 @@
                 particles[i].update(); particles[i].draw();
                 if (particles[i].life <= 0) particles.splice(i, 1);
             }
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                floatingTexts[i].update(); floatingTexts[i].draw();
+                if (floatingTexts[i].life <= 0) floatingTexts.splice(i, 1);
+            }
 
+            ctx.restore();
             window.requestAnimationFrame(animate);
         }
     </script>
