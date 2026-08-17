@@ -3,75 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hogwarts Battle - Neon Edition</title>
+    <title>Hogwarts Battle - Ultimate Edition</title>
     <style>
-        body { margin: 0; background-color: #0d1117; display: flex; flex-direction: column; align-items: center; min-height: 100dvh; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; color: white; user-select: none; touch-action: none; box-sizing: border-box;}
+        body { margin: 0; background-color: #050505; display: flex; flex-direction: column; align-items: center; min-height: 100dvh; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; color: white; user-select: none; touch-action: none; box-sizing: border-box;}
         *, *::before, *::after { box-sizing: border-box; }
         
-        #selection-screen { position: absolute; width: 100%; height: 100%; background: radial-gradient(circle at center, #1a252f 0%, #080b0f 100%); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 60; transition: opacity 0.5s; }
-        #selection-screen h1 { font-size: 28px; margin-bottom: 20px; text-shadow: 0 0 15px rgba(255,255,255,0.5); text-align: center;}
-        .house-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 90%; max-width: 500px; }
-        .house-btn { background-color: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s; backdrop-filter: blur(5px); }
-        .house-btn:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        #selection-screen { position: absolute; width: 100%; height: 100%; background: radial-gradient(circle at center, #0f172a 0%, #020617 100%); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 60; transition: opacity 0.5s; }
+        #selection-screen h1 { font-size: 32px; margin-bottom: 20px; text-shadow: 0 0 20px rgba(255,255,255,0.8); text-align: center; font-weight: 900; letter-spacing: 2px;}
+        .house-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; width: 90%; max-width: 550px; }
+        .house-btn { background-color: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 25px; text-align: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); backdrop-filter: blur(10px); position: relative; overflow: hidden;}
+        .house-btn::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%); opacity: 0; transition: opacity 0.3s;}
+        .house-btn:hover::before { opacity: 1; }
+        .house-btn:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.6); }
         .house-btn:active { transform: scale(0.95); }
-        .house-name { font-size: 22px; font-weight: bold; display: block;}
+        .house-name { font-size: 26px; font-weight: 900; display: block; position: relative; z-index: 1;}
         
-        #lion-pick { border-color: #e74c3c; color: #e74c3c; text-shadow: 0 0 10px rgba(231, 76, 60, 0.5);}
-        #snake-pick { border-color: #2ecc71; color: #2ecc71; text-shadow: 0 0 10px rgba(46, 204, 113, 0.5);}
-        #badger-pick { border-color: #f1c40f; color: #f1c40f; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);}
-        #eagle-pick { border-color: #3498db; color: #3498db; text-shadow: 0 0 10px rgba(52, 152, 219, 0.5);}
+        #lion-pick { border-color: #e74c3c; color: #ff7675; text-shadow: 0 0 15px rgba(231, 76, 60, 0.8), 0 0 5px rgba(231, 76, 60, 1);}
+        #snake-pick { border-color: #2ecc71; color: #55efc4; text-shadow: 0 0 15px rgba(46, 204, 113, 0.8), 0 0 5px rgba(46, 204, 113, 1);}
+        #badger-pick { border-color: #f1c40f; color: #ffeaa7; text-shadow: 0 0 15px rgba(241, 196, 15, 0.8), 0 0 5px rgba(241, 196, 15, 1);}
+        #eagle-pick { border-color: #3498db; color: #74b9ff; text-shadow: 0 0 15px rgba(52, 152, 219, 0.8), 0 0 5px rgba(52, 152, 219, 1);}
 
-        /* Game Screen (Forced LTR for P1 Left, P2 Right logic) */
+        /* Game Screen */
         #game-screen { display: none; position: relative; width: 100%; height: 100dvh; flex-direction: column; align-items: center; opacity: 0; transition: opacity 0.5s; direction: ltr;}
         
-        #ui-top { position: absolute; top: 10px; width: 100%; max-width: 800px; display: flex; justify-content: space-between; padding: 0 10px; z-index: 10; }
+        #ui-top { position: absolute; top: 15px; width: 100%; max-width: 800px; display: flex; justify-content: space-between; padding: 0 15px; z-index: 10; }
         
-        /* Stats Styling matching the Concept Image */
-        .stats-wrapper { width: 45%; display: flex; flex-direction: column; gap: 4px; }
+        .stats-wrapper { width: 45%; display: flex; flex-direction: column; gap: 6px; }
         .p1-stats { align-items: flex-start; }
         .p2-stats { align-items: flex-end; }
         
-        .wizard-label { font-size: 20px; font-weight: 900; letter-spacing: 1px; text-shadow: 2px 2px 0 #000; margin-bottom: 2px;}
+        .wizard-label { font-size: 22px; font-weight: 900; letter-spacing: 1px; text-shadow: 2px 2px 4px #000, 0 0 10px currentColor; margin-bottom: 2px;}
         
-        /* HP Bar */
-        .hp-bar-container { width: 100%; height: 24px; background-color: #111; border: 3px solid; position: relative; box-shadow: 0 0 10px rgba(0,0,0,0.8); }
-        #p1-hp-container { border-color: #00ffff; } /* Cyan border for P1 */
-        #p2-hp-container { border-color: #39ff14; } /* Green border for P2 */
-        .hp-fill { height: 100%; background-color: #e74c3c; transition: width 0.3s; }
+        .hp-bar-container { width: 100%; height: 26px; background-color: rgba(0,0,0,0.6); border: 2px solid; border-radius: 12px; position: relative; box-shadow: 0 0 15px rgba(0,0,0,0.9); overflow: hidden; backdrop-filter: blur(4px);}
+        #p1-hp-container { border-color: rgba(0, 255, 255, 0.6); } 
+        #p2-hp-container { border-color: rgba(57, 255, 20, 0.6); } 
+        .hp-fill { height: 100%; background: linear-gradient(90deg, #c0392b, #ff4757); transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        #p1-hp { box-shadow: inset -5px 0 10px rgba(0,0,0,0.3); }
+        #p2-hp { box-shadow: inset 5px 0 10px rgba(0,0,0,0.3); }
         
-        /* Mana Bar */
-        .mana-bar-container { width: 80%; height: 8px; background-color: #111; border: 1px solid #555; position: relative; }
-        .mana-fill { height: 100%; background-color: #3498db; transition: width 0.3s; }
+        .mana-bar-container { width: 85%; height: 10px; background-color: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; position: relative; overflow: hidden;}
+        .mana-fill { height: 100%; background: linear-gradient(90deg, #0984e3, #74b9ff); transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px #74b9ff;}
 
         /* Canvas Wrapper */
-        #canvas-wrapper { width: 100%; max-width: 800px; flex: 1; display: flex; justify-content: center; align-items: center; margin-top: 50px; margin-bottom: 180px;}
-        canvas { background-color: #0a0f14; border: 3px solid #34495e; border-radius: 8px; box-shadow: 0 5px 25px rgba(0,0,0,0.8); width: 95%; max-height: 45vh; object-fit: contain;}
+        #canvas-wrapper { width: 100%; max-width: 800px; flex: 1; display: flex; justify-content: center; align-items: center; margin-top: 60px; margin-bottom: 220px;}
+        canvas { background-color: #020617; border: 2px solid rgba(255,255,255,0.1); border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.9), 0 0 20px rgba(255,255,255,0.05); width: 95%; max-height: 48vh; object-fit: contain;}
 
         /* Controls */
-        #turn-controls { width: 100%; max-width: 800px; background: rgba(15, 20, 30, 0.95); border-top: 2px solid #34495e; padding: 10px; position: absolute; bottom: 0; display: flex; flex-direction: column; align-items: center; z-index: 15; direction: rtl;}
-        #turn-message { font-size: 18px; font-weight: bold; text-align: center; color: #f1c40f; min-height: 25px; margin-bottom: 10px; text-shadow: 0 0 5px #000;}
+        #turn-controls { width: 100%; max-width: 800px; background: linear-gradient(to top, rgba(2, 6, 23, 1) 40%, rgba(2, 6, 23, 0.85)); border-top: 1px solid rgba(255,255,255,0.1); padding: 15px 10px 25px 10px; position: absolute; bottom: 0; display: flex; flex-direction: column; align-items: center; z-index: 15; direction: rtl; backdrop-filter: blur(10px);}
+        #turn-message { font-size: 20px; font-weight: 900; text-align: center; color: #f1c40f; min-height: 28px; margin-bottom: 12px; text-shadow: 0 0 10px rgba(241, 196, 15, 0.6), 0 0 20px #000; letter-spacing: 0.5px;}
         #action-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; width: 100%;}
         
-        .btn { padding: 8px 12px; background-color: rgba(0,0,0,0.5); border: 2px solid; border-radius: 6px; font-size: 14px; font-weight: bold; color: white; cursor: pointer; transition: all 0.2s; min-width: 110px;}
-        .btn:active { transform: scale(0.92); }
+        .btn { padding: 10px 14px; background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-bottom: 3px solid; border-radius: 8px; font-size: 15px; font-weight: 800; color: white; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); min-width: 120px; text-shadow: 1px 1px 2px #000;}
+        .btn:active { transform: scale(0.92); border-bottom-width: 1px; margin-top: 2px;}
         .btn:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(80%); border-color: #555 !important;}
         
-        /* Spell Types */
-        .btn-attack { border-color: #e74c3c; box-shadow: inset 0 0 10px rgba(231,76,60,0.2); }
-        .btn-utility { border-color: #9b59b6; box-shadow: inset 0 0 10px rgba(155,89,182,0.2); }
-        .btn-defense { border-color: #3498db; box-shadow: inset 0 0 10px rgba(52,152,219,0.2); }
-        .btn-heal { border-color: #2ecc71; box-shadow: inset 0 0 10px rgba(46,204,113,0.2); }
-        .btn-mana { border-color: #f1c40f; box-shadow: inset 0 0 10px rgba(241,196,15,0.2); }
+        .btn-attack { border-bottom-color: #e74c3c; background: linear-gradient(to bottom, transparent, rgba(231,76,60,0.1));}
+        .btn-utility { border-bottom-color: #9b59b6; background: linear-gradient(to bottom, transparent, rgba(155,89,182,0.1));}
+        .btn-defense { border-bottom-color: #3498db; background: linear-gradient(to bottom, transparent, rgba(52,152,219,0.1));}
+        .btn-heal { border-bottom-color: #2ecc71; background: linear-gradient(to bottom, transparent, rgba(46,204,113,0.1));}
+        .btn-mana { border-bottom-color: #f1c40f; background: linear-gradient(to bottom, transparent, rgba(241,196,15,0.1));}
 
         /* RPS Overlay */
-        #rps-overlay { position: absolute; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 40; backdrop-filter: blur(4px); direction: rtl;}
-        #rps-overlay h2 { color: #fff; margin-bottom: 10px; font-size: 24px;}
-        #rps-attacker-msg { color: #e74c3c; font-size: 18px; font-weight: bold; margin-bottom: 25px; text-align: center; background: rgba(0,0,0,0.6); padding: 10px 15px; border-radius: 8px; border: 1px solid #e74c3c;}
-        #rps-btns { display: flex; gap: 20px; direction: ltr;}
-        .rps-btn { font-size: 55px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; width: 90px; height: 90px; cursor: pointer; transition: transform 0.2s; display: flex; justify-content: center; align-items: center; padding: 0;}
+        #rps-overlay { position: absolute; width: 100%; height: 100%; background-color: rgba(2, 6, 23, 0.9); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 40; backdrop-filter: blur(8px); direction: rtl;}
+        #rps-overlay h2 { color: #fff; margin-bottom: 10px; font-size: 28px; text-shadow: 0 0 15px rgba(255,255,255,0.5); font-weight: 900;}
+        #rps-attacker-msg { color: #fff; font-size: 22px; font-weight: bold; margin-bottom: 35px; text-align: center; background: rgba(0,0,0,0.6); padding: 15px 25px; border-radius: 12px; border: 2px solid #e74c3c; box-shadow: 0 0 20px rgba(231,76,60,0.4), inset 0 0 10px rgba(231,76,60,0.2);}
+        #rps-btns { display: flex; gap: 25px; direction: ltr;}
+        .rps-btn { font-size: 60px; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 80%); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; width: 110px; height: 110px; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); display: flex; justify-content: center; align-items: center; box-shadow: 0 0 15px rgba(255,255,255,0.1);}
+        .rps-btn:hover { background: rgba(255,255,255,0.2); border-color: #fff; transform: translateY(-5px); box-shadow: 0 5px 20px rgba(255,255,255,0.3);}
         .rps-btn:active { transform: scale(0.85); background: rgba(255,255,255,0.3);}
 
-        #game-over { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 26px; font-weight: bold; display: none; text-align: center; z-index: 50; background: rgba(15, 20, 30, 0.98); padding: 30px; border-radius: 15px; border: 3px solid #f1c40f; box-shadow: 0 0 30px rgba(241, 196, 15, 0.5); direction: rtl;}
+        #game-over { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 28px; font-weight: 900; display: none; text-align: center; z-index: 50; background: linear-gradient(135deg, rgba(15, 20, 30, 0.98), rgba(2, 6, 23, 0.98)); padding: 40px; border-radius: 20px; border: 2px solid #f1c40f; box-shadow: 0 0 40px rgba(241, 196, 15, 0.6); direction: rtl;}
     </style>
 </head>
 <body>
@@ -88,13 +89,11 @@
 
     <div id="game-screen">
         <div id="ui-top">
-            <!-- P1 (Left Side conceptually in LTR) -->
             <div class="stats-wrapper p1-stats">
                 <div class="wizard-label" id="p1-label" style="color: #00ffff;">P1</div>
                 <div class="hp-bar-container" id="p1-hp-container"><div id="p1-hp" class="hp-fill"></div></div>
                 <div class="mana-bar-container"><div id="p1-mana" class="mana-fill"></div></div>
             </div>
-            <!-- P2 (Right Side conceptually in LTR) -->
             <div class="stats-wrapper p2-stats">
                 <div class="wizard-label" id="p2-label" style="color: #39ff14;">P2</div>
                 <div class="hp-bar-container" id="p2-hp-container"><div id="p2-hp" class="hp-fill" style="float: right;"></div></div>
@@ -102,7 +101,7 @@
             </div>
         </div>
 
-        <div id="game-over">النتيجة<br><button onclick="location.reload()" style="padding: 10px 20px; font-size: 16px; margin-top: 20px; cursor: pointer; background:#f1c40f; color:#000; border:none; border-radius:6px; font-weight:bold;">مبارزة جديدة</button></div>
+        <div id="game-over">النتيجة<br><button onclick="location.reload()" style="padding: 12px 25px; font-size: 18px; margin-top: 25px; cursor: pointer; background: linear-gradient(90deg, #f1c40f, #e67e22); color:#000; border:none; border-radius:8px; font-weight:900; box-shadow: 0 5px 15px rgba(241, 196, 15, 0.4);">مبارزة جديدة</button></div>
 
         <div id="canvas-wrapper">
             <canvas id="gameCanvas" width="800" height="400"></canvas>
@@ -122,6 +121,7 @@
             <div id="turn-message">انتظر دورك...</div>
             <div id="action-btns">
                 <button class="btn btn-attack" id="btn-incendio">Incendio (20💧)</button>
+                <button class="btn btn-attack" id="btn-sectumsempra">Sectumsempra (25💧)</button>
                 <button class="btn btn-attack" id="btn-rictusempra">Rictusempra (15💧)</button>
                 <button class="btn btn-utility" id="btn-petrificus">Petrificus (25💧)</button>
                 <button class="btn btn-utility" id="btn-legilimens">Legilimens (15💧)</button>
@@ -142,7 +142,17 @@
             p1Hp: document.getElementById('p1-hp'), p1Mana: document.getElementById('p1-mana'), p1Label: document.getElementById('p1-label'),
             p2Hp: document.getElementById('p2-hp'), p2Mana: document.getElementById('p2-mana'), p2Label: document.getElementById('p2-label'),
             message: document.getElementById('turn-message'),
-            btns: { incendio: document.getElementById('btn-incendio'), rictusempra: document.getElementById('btn-rictusempra'), petrificus: document.getElementById('btn-petrificus'), legilimens: document.getElementById('btn-legilimens'), confundo: document.getElementById('btn-confundo'), protego: document.getElementById('btn-protego'), episkey: document.getElementById('btn-episkey'), meditate: document.getElementById('btn-meditate') },
+            btns: { 
+                incendio: document.getElementById('btn-incendio'), 
+                sectumsempra: document.getElementById('btn-sectumsempra'),
+                rictusempra: document.getElementById('btn-rictusempra'), 
+                petrificus: document.getElementById('btn-petrificus'), 
+                legilimens: document.getElementById('btn-legilimens'), 
+                confundo: document.getElementById('btn-confundo'), 
+                protego: document.getElementById('btn-protego'), 
+                episkey: document.getElementById('btn-episkey'), 
+                meditate: document.getElementById('btn-meditate') 
+            },
             rps: { overlay: document.getElementById('rps-overlay'), rock: document.getElementById('rps-rock'), paper: document.getElementById('rps-paper'), scissors: document.getElementById('rps-scissors'), attackerMsg: document.getElementById('rps-attacker-msg') },
             gameOver: document.getElementById('game-over')
         };
@@ -151,19 +161,21 @@
         let p1, p2;
         let turnContext = { attacker: null, defender: null, spell: null, currentTurn: 'player' };
         let screenShake = 0; 
+        let globalTime = 0; // for animations
 
         const houses = {
-            lion: { name: 'جريفندور', color: '#00ffff' }, // Using Cyan for P1 (matching image P1)
-            snake: { name: 'سليذرين', color: '#39ff14' }, // Using Green for P2
+            lion: { name: 'جريفندور', color: '#00ffff' }, 
+            snake: { name: 'سليذرين', color: '#39ff14' }, 
             badger: { name: 'هوفلباف', color: '#f1c40f' },
-            eagle: { name: 'راونكلو', color: '#3498db' }
+            eagle: { name: 'ريفينكلو', color: '#3498db' }
         };
 
         const spellBook = {
             incendio: { name: 'Incendio', damage: 30, cost: 20, color: '#e74c3c', type: 'attack', particleType: 'fire', shake: 15 },
+            sectumsempra: { name: 'Sectumsempra', damage: 20, cost: 25, color: '#ff0000', type: 'attack', dotDamage: 15, dotTurns: 3, particleType: 'slash', shake: 12 },
             rictusempra: { name: 'Rictusempra', damage: 10, cost: 15, color: '#f1c40f', type: 'attack', dotDamage: 10, dotTurns: 3, particleType: 'spark', shake: 5 },
             petrificus: { name: 'Petrificus Totalus', damage: 5, cost: 25, color: '#bdc3c7', type: 'attack', stunTurns: 1, particleType: 'beam', shake: 8 },
-            legilimens: { name: 'Legilimens', damage: 0, cost: 15, color: '#9b59b6', type: 'utility', legilimensActive: true },
+            legilimens: { name: 'Legilimens', damage: 0, cost: 15, color: '#9b59b6', type: 'utility' },
             confundo: { name: 'Confundo', damage: 0, cost: 10, color: '#9b59b6', type: 'utility', confundoTurns: 1 },
             protego: { name: 'Protego', damage: 0, cost: 10, color: '#3498db', type: 'defense' },
             episkey: { name: 'Episkey', heal: 30, cost: 20, color: '#2ecc71', type: 'heal' }
@@ -174,16 +186,23 @@
         let projectiles = [];
         let floatingTexts = [];
 
+        // Stars for Background
+        let stars = [];
+        for(let i=0; i<80; i++) {
+            stars.push({ x: Math.random() * 800, y: Math.random() * 250, size: Math.random() * 1.5, alpha: Math.random(), speed: Math.random() * 0.05 });
+        }
+
         class FloatingText {
             constructor(x, y, text, color) {
-                this.x = x; this.y = y - 30; this.text = text; this.color = color;
+                this.x = x; this.y = y - 40; this.text = text; this.color = color;
                 this.life = 1.0; this.vy = -1.5; 
             }
             update() { this.y += this.vy; this.life -= 0.02; }
             draw() {
                 ctx.save(); ctx.globalAlpha = Math.max(0, this.life);
-                ctx.font = 'bold 26px Arial'; ctx.textAlign = 'center';
-                ctx.fillStyle = this.color; ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
+                ctx.font = '900 30px Arial'; ctx.textAlign = 'center';
+                ctx.fillStyle = this.color; 
+                ctx.shadowColor = '#000'; ctx.shadowBlur = 8; ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2;
                 ctx.fillText(this.text, this.x, this.y);
                 ctx.restore();
             }
@@ -193,13 +212,14 @@
             constructor(x, y, color, type) {
                 this.x = x; this.y = y; this.color = color; this.type = type;
                 this.size = Math.random() * 4 + 2;
-                this.vx = (Math.random() - 0.5) * 6;
-                this.vy = (Math.random() - 0.5) * 6;
+                this.vx = (Math.random() - 0.5) * 8;
+                this.vy = (Math.random() - 0.5) * 8;
                 this.life = 1.0; this.decay = Math.random() * 0.03 + 0.02;
             }
             update() {
                 this.x += this.vx; this.y += this.vy;
                 if(this.type === 'fire') { this.vy -= 0.2; this.size *= 0.9; } 
+                else if (this.type === 'slash') { this.vx *= 0.9; this.vy *= 0.9; this.size *= 0.95; }
                 this.life -= this.decay;
             }
             draw() {
@@ -215,7 +235,7 @@
             constructor(startX, startY, targetX, targetY, color, type, spellData, onHit) {
                 this.x = startX; this.y = startY; this.targetX = targetX; this.targetY = targetY;
                 this.color = color; this.type = type; this.spellData = spellData; this.onHit = onHit;
-                this.speed = 12;
+                this.speed = 14;
                 const angle = Math.atan2(targetY - startY, targetX - startX);
                 this.vx = Math.cos(angle) * this.speed;
                 this.vy = Math.sin(angle) * this.speed;
@@ -223,106 +243,114 @@
             }
             update() {
                 this.x += this.vx; this.y += this.vy;
-                particles.push(new Particle(this.x, this.y, this.color, this.type));
+                if(this.type === 'slash') {
+                    particles.push(new Particle(this.x + (Math.random()-0.5)*20, this.y + (Math.random()-0.5)*20, this.color, this.type));
+                } else {
+                    particles.push(new Particle(this.x, this.y, this.color, this.type));
+                }
+                
                 const dist = Math.hypot(this.targetX - this.x, this.targetY - this.y);
                 if (dist < this.speed) {
                     this.active = false;
-                    for(let i=0; i<25; i++) particles.push(new Particle(this.x, this.y, this.color, this.type));
+                    for(let i=0; i<35; i++) particles.push(new Particle(this.x, this.y, this.color, this.type));
                     if(this.spellData && this.spellData.shake) screenShake = this.spellData.shake;
                     if(this.onHit) this.onHit();
                 }
             }
             draw() {
-                ctx.shadowBlur = 15; ctx.shadowColor = this.color; ctx.fillStyle = '#fff';
+                ctx.shadowBlur = 20; ctx.shadowColor = this.color; ctx.fillStyle = '#fff';
                 ctx.beginPath(); ctx.arc(this.x, this.y, 6, 0, Math.PI*2); ctx.fill();
                 ctx.shadowBlur = 0;
             }
         }
 
-        // --- Stickman Drawing ---
-        function drawStickman(ctx, x, y, color, isFacingRight, state) {
+        // --- Improved Robed Wizard Drawing ---
+        function drawWizard(ctx, x, y, color, isFacingRight, state, time) {
             ctx.save();
-            ctx.translate(x, y);
+            // Breathing animation (floating up and down)
+            const bob = Math.sin(time / 200) * 4;
+            ctx.translate(x, y + bob);
             if (!isFacingRight) ctx.scale(-1, 1);
             
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 6;
-            ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-            ctx.shadowColor = color; ctx.shadowBlur = 15;
-
-            // Cape
+            // Magic glow aura
+            ctx.shadowColor = color; ctx.shadowBlur = 25;
+            
+            // Robe Body
             ctx.beginPath();
-            ctx.fillStyle = 'rgba(0,0,0,0.7)';
-            ctx.moveTo(-5, -80);
-            ctx.lineTo(-30, -20);
-            ctx.lineTo(-5, -10);
-            ctx.fill(); ctx.stroke();
+            ctx.moveTo(0, -70); // Neck
+            ctx.quadraticCurveTo(20, -30, 30, 0); // Right flow
+            ctx.lineTo(-30, 0); // Bottom
+            ctx.quadraticCurveTo(-20, -30, 0, -70); // Left flow
+            ctx.fillStyle = 'rgba(10, 10, 15, 0.95)';
+            ctx.fill();
+            ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.stroke();
 
-            // Head
+            // Head (Hooded)
             ctx.beginPath();
-            ctx.arc(0, -100, 15, 0, Math.PI*2);
-            ctx.fillStyle = '#000';
-            ctx.fill(); ctx.stroke();
+            ctx.arc(0, -85, 18, 0, Math.PI*2);
+            ctx.fillStyle = '#050505'; ctx.fill(); ctx.stroke();
 
-            // Body
+            // Arm & Wand
             ctx.beginPath();
-            ctx.moveTo(0, -85); ctx.lineTo(0, -45);
-            // Legs
-            ctx.moveTo(0, -45); ctx.lineTo(-15, 0); // Back leg
-            ctx.moveTo(0, -45); ctx.lineTo(20, 0);  // Front leg
-            // Arms
+            ctx.lineCap = 'round';
             if (state === 'casting') {
-                ctx.moveTo(0, -75); ctx.lineTo(45, -75); 
+                ctx.moveTo(0, -60); 
+                ctx.quadraticCurveTo(25, -65, 45, -60); // Arm extended
+                ctx.stroke();
+                // Wand
+                ctx.beginPath(); ctx.moveTo(45, -60); ctx.lineTo(75, -50); 
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.stroke();
+                // Wand Glow
+                ctx.beginPath(); ctx.arc(75, -50, 6, 0, Math.PI*2);
+                ctx.fillStyle = '#fff'; ctx.shadowBlur = 20; ctx.fill();
             } else {
-                ctx.moveTo(0, -75); ctx.lineTo(25, -55);
+                ctx.moveTo(0, -60); 
+                ctx.quadraticCurveTo(15, -40, 25, -20); // Arm relaxed
+                ctx.stroke();
             }
-            ctx.stroke();
             ctx.restore();
         }
 
-        class Wizard {
+        class WizardPlayer {
             constructor(x, color, isFacingRight, labelColor) {
-                this.x = x; this.y = canvas.height - 60; // Bottom alignment
-                this.color = labelColor; // The glowing outline color
+                this.x = x; this.y = canvas.height - 40; // Floor level
+                this.color = labelColor; 
                 this.health = 100; this.mana = 100;
                 this.isShielding = false; this.isFacingRight = isFacingRight;
                 this.stunTurns = 0; this.confundoTurns = 0; this.bleedTurns = 0;
                 this.state = 'idle';
+                this.hasLegilimens = false; // NEW BUG FIX
             }
 
             draw() {
                 // Shield (Protego) - Particle Dome
                 if (this.isShielding) {
                     ctx.save();
-                    ctx.translate(this.x, this.y - 50);
-                    ctx.beginPath(); ctx.arc(0, 0, 80, Math.PI, 0);
-                    ctx.strokeStyle = '#3498db'; ctx.lineWidth = 3;
-                    ctx.shadowBlur = 15; ctx.shadowColor = '#3498db'; ctx.stroke();
-                    // Dome particles
-                    for(let i=0; i<15; i++) {
-                        let ang = Math.PI + Math.random() * Math.PI;
-                        let r = 70 + Math.random() * 10;
-                        ctx.fillStyle = '#fff';
-                        ctx.fillRect(Math.cos(ang)*r, Math.sin(ang)*r, 2, 2);
-                    }
+                    ctx.translate(this.x, this.y - 45);
+                    ctx.beginPath(); ctx.arc(0, 0, 75, Math.PI, 0);
+                    ctx.strokeStyle = '#3498db'; ctx.lineWidth = 4;
+                    ctx.setLineDash([12, 8]); 
+                    ctx.lineDashOffset = -globalTime / 15; 
+                    ctx.shadowBlur = 25; ctx.shadowColor = '#3498db'; ctx.stroke();
+                    ctx.fillStyle = 'rgba(52, 152, 219, 0.15)'; ctx.fill();
                     ctx.restore();
                 }
 
-                // Draw the actual stickman
-                drawStickman(ctx, this.x, this.y, this.color, this.isFacingRight, this.state);
+                drawWizard(ctx, this.x, this.y, this.color, this.isFacingRight, this.state, globalTime);
 
-                // Status Effects
-                let statusY = this.y - 130;
-                ctx.font = '24px Arial'; ctx.textAlign = 'center'; ctx.shadowBlur = 0;
-                if (this.stunTurns > 0) { ctx.fillText('💤', this.x, statusY); statusY -= 25; }
-                if (this.confundoTurns > 0) { ctx.fillText('💫', this.x, statusY); statusY -= 25; }
+                // Status Effects UI
+                let statusY = this.y - 120;
+                ctx.font = '26px Arial'; ctx.textAlign = 'center'; ctx.shadowBlur = 0;
+                if (this.stunTurns > 0) { ctx.fillText('💤', this.x, statusY); statusY -= 30; }
+                if (this.confundoTurns > 0) { ctx.fillText('💫', this.x, statusY); statusY -= 30; }
+                if (this.hasLegilimens) { ctx.fillText('👁️', this.x, statusY); statusY -= 30; } // Show mind control active
                 if (this.bleedTurns > 0) { 
-                    // Fire ring at feet
+                    // Fire/Blood ring at feet
                     ctx.save();
-                    ctx.beginPath(); ctx.ellipse(this.x, this.y, 40, 10, 0, 0, Math.PI*2);
-                    ctx.strokeStyle = '#e67e22'; ctx.lineWidth = 2; ctx.shadowBlur=10; ctx.shadowColor='#e67e22'; ctx.stroke();
+                    ctx.beginPath(); ctx.ellipse(this.x, this.y, 40, 8, 0, 0, Math.PI*2);
+                    ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 3; ctx.shadowBlur=15; ctx.shadowColor='#ff0000'; ctx.stroke();
                     ctx.restore();
-                    if(Math.random() < 0.3) particles.push(new Particle(this.x + (Math.random()-0.5)*40, this.y, '#e67e22', 'fire'));
+                    if(Math.random() < 0.4) particles.push(new Particle(this.x + (Math.random()-0.5)*40, this.y, '#ff0000', 'fire'));
                 }
             }
             canCast(spell) { return this.mana >= spell.cost; }
@@ -339,9 +367,8 @@
             setTimeout(() => {
                 ui.selection.style.display = 'none'; ui.game.style.display = 'flex'; ui.game.style.opacity = '1';
                 
-                // P1 is always Cyan conceptually, but let's map name to the chosen house
-                p1 = new Wizard(150, houses[houseKey], true, '#00ffff'); 
-                p2 = new Wizard(canvas.width - 150, houses['snake'], false, '#39ff14'); 
+                p1 = new WizardPlayer(150, houses[houseKey], true, '#00ffff'); 
+                p2 = new WizardPlayer(canvas.width - 150, houses['snake'], false, '#39ff14'); 
                 
                 ui.p1Label.innerText = 'P1 (' + houses[houseKey].name + ')';
                 ui.p1Label.style.color = '#00ffff'; 
@@ -364,7 +391,6 @@
             Object.values(ui.btns).forEach(btn => { if(btn) btn.disabled = !enable; }); 
         }
 
-        let legilimensTarget = null;
         let pendingAIChoice = null;
 
         function handleP1Action(spellKey) {
@@ -378,20 +404,22 @@
             if (spell.type === 'attack') {
                 turnContext.attacker = p1; turnContext.defender = p2; turnContext.spell = spell;
                 p1.isShielding = false; toggleButtons(false); ui.rps.overlay.style.display = 'flex';
-                if (legilimensTarget === p2) {
+                
+                // BUG FIX: Check if P1 has the Legilimens buff
+                if (p1.hasLegilimens) {
                     pendingAIChoice = ['rock', 'paper', 'scissors'][Math.floor(Math.random() * 3)];
-                    ui.rps.attackerMsg.innerHTML = `🔮 أفكار مكشوفة! الخصم سيلعب: <b>${ {rock:'✊',paper:'✋',scissors:'✌️'}[pendingAIChoice] }</b>`;
+                    ui.rps.attackerMsg.innerHTML = `🔮 أفكار مكشوفة! الخصم سيدافع بـ: <b>${ {rock:'✊',paper:'✋',scissors:'✌️'}[pendingAIChoice] }</b>`;
                     ui.rps.attackerMsg.style.borderColor = '#9b59b6'; ui.rps.attackerMsg.style.color = '#fff';
-                    legilimensTarget = null;
+                    p1.hasLegilimens = false; // Consume the buff
                 } else {
                     ui.rps.attackerMsg.innerText = `أنت تهاجم بـ ${spell.name}! اختر بسرعة ✊✋✌️`;
-                    ui.rps.attackerMsg.style.borderColor = '#e74c3c'; ui.rps.attackerMsg.style.color = '#e74c3c';
+                    ui.rps.attackerMsg.style.borderColor = '#e74c3c'; ui.rps.attackerMsg.style.color = '#fff';
                     pendingAIChoice = null;
                 }
             } else if (spell.type === 'defense') { executeDefense(p1, spell); } 
               else if (spell.type === 'heal') { executeHeal(p1, spell); } 
               else if (spell.type === 'utility') {
-                if (spell.legilimensActive) executeLegilimens(p1, p2, spell);
+                if (spell.legilimensActive) executeLegilimens(p1, spell);
                 else if (spell.confundoTurns) executeConfundo(p1, p2, spell);
             }
         }
@@ -430,10 +458,10 @@
                 }
                 
                 turnContext.attacker.state = 'casting';
-                const startX = turnContext.attacker.x + (turnContext.attacker.isFacingRight ? 40 : -40);
-                const startY = turnContext.attacker.y - 75;
+                const startX = turnContext.attacker.x + (turnContext.attacker.isFacingRight ? 50 : -50);
+                const startY = turnContext.attacker.y - 50;
                 const endX = turnContext.defender.x;
-                const endY = turnContext.defender.y - 50;
+                const endY = turnContext.defender.y - 40;
 
                 projectiles.push(new Projectile(startX, startY, endX, endY, turnContext.spell.color, turnContext.spell.particleType, turnContext.spell, () => {
                     executeAttackHit(turnContext.attacker, turnContext.defender, turnContext.spell, damageMultiplier);
@@ -467,7 +495,7 @@
         }
 
         function spawnSelfParticles(wizard, color) {
-            for(let i=0; i<40; i++) particles.push(new Particle(wizard.x, wizard.y - 50, color, 'spark'));
+            for(let i=0; i<40; i++) particles.push(new Particle(wizard.x, wizard.y - 40, color, 'spark'));
         }
 
         function executeDefense(caster, spell) {
@@ -488,10 +516,12 @@
             if (caster === p1) setTimeout(startAITurn, 1500); else startP1Turn();
         }
 
-        function executeLegilimens(caster, target, spell) {
+        // BUG FIX: Legilimens now applies to the caster
+        function executeLegilimens(caster, spell) {
             caster.consumeMana(spell); caster.isShielding = false; updateStatsUI();
-            ui.message.innerText = `تعويذة Legilimens 🔮.`;
-            legilimensTarget = target; toggleButtons(false); spawnSelfParticles(target, spell.color);
+            ui.message.innerText = `تعويذة Legilimens 🔮. هتقرأ أفكاره الهجمة الجاية!`;
+            caster.hasLegilimens = true; 
+            toggleButtons(false); spawnSelfParticles(caster, spell.color);
             caster.state = 'idle';
             if (caster === p1) setTimeout(startAITurn, 1500); else startP1Turn();
         }
@@ -507,8 +537,8 @@
         function applyTurnEffects(wizard) {
             if (wizard.bleedTurns > 0) {
                 wizard.health -= wizard.bleedDamage; if (wizard.health < 0) wizard.health = 0;
-                ui.message.innerText = `🩸 أثر Rictusempra (-${wizard.bleedDamage} HP).`; wizard.bleedTurns--; 
-                floatingTexts.push(new FloatingText(wizard.x, wizard.y, `-${wizard.bleedDamage}`, '#e67e22'));
+                ui.message.innerText = `🩸 أثر النزيف (-${wizard.bleedDamage} HP).`; wizard.bleedTurns--; 
+                floatingTexts.push(new FloatingText(wizard.x, wizard.y, `-${wizard.bleedDamage}`, '#ff0000'));
                 updateStatsUI(); return true;
             }
             return false;
@@ -518,7 +548,7 @@
             if (isGameOver) return; turnContext.currentTurn = 'player'; p1.isShielding = false; p1.state = 'idle';
             const bleedApplied = applyTurnEffects(p1);
             if (p1.stunTurns > 0) { p1.stunTurns--; ui.message.innerText += ' 💤 مشلول! دورك ضاع.'; toggleButtons(false); setTimeout(startAITurn, 2000); return; }
-            setTimeout(() => { toggleButtons(true); ui.message.innerText = 'دورك الآن! اختر تعويذة 👇'; ui.message.style.color = '#39ff14'; }, bleedApplied ? 2000 : 0);
+            setTimeout(() => { toggleButtons(true); ui.message.innerText = 'دورك الآن! اختر تعويذة 👇'; ui.message.style.color = '#00ffff'; }, bleedApplied ? 2000 : 0);
         }
 
         function startAITurn() {
@@ -535,11 +565,13 @@
                     updateStatsUI(); setTimeout(startP1Turn, 1500); 
                 }
                 else if (p1.bleedTurns > 0 && p2.canCast(spellBook.petrificus)) { p2.state='casting'; executeSpellAI(p2, p1, spellBook.petrificus); }
-                else if (p1.isShielding && Math.random() < 0.5 && p2.canCast(spellBook.legilimens)) { p2.state='casting'; executeLegilimens(p2, p1, spellBook.legilimens); }
+                else if (p1.isShielding && Math.random() < 0.5 && p2.canCast(spellBook.legilimens)) { p2.state='casting'; executeLegilimens(p2, spellBook.legilimens); }
                 else if (Math.random() < 0.3 && p2.canCast(spellBook.confundo)) { p2.state='casting'; executeConfundo(p2, p1, spellBook.confundo); }
                 else {
                     p2.state='casting';
-                    let spellToCast = spellBook.incendio;
+                    // AI favors Sectumsempra and Incendio
+                    let spellToCast = spellBook.sectumsempra;
+                    if (!p2.canCast(spellBook.sectumsempra)) spellToCast = spellBook.incendio;
                     if (!p2.canCast(spellBook.incendio)) spellToCast = spellBook.rictusempra;
                     executeSpellAI(p2, p1, spellToCast);
                 }
@@ -552,13 +584,14 @@
             ui.message.innerText = `الكمبيوتر يجهز ${spell.name}! دافع⚔️`;
             setTimeout(() => {
                 ui.rps.overlay.style.display = 'flex';
-                if (legilimensTarget === p1) {
-                    ui.rps.attackerMsg.innerText = `🔮 أفكار مكشوفة! سيلعب: ${ {rock:'✊',paper:'✋',scissors:'✌️'}[aiChoice] }!`;
+                // BUG FIX: If target (P1) has Legilimens, reveal AI choice
+                if (target.hasLegilimens) {
+                    ui.rps.attackerMsg.innerHTML = `🔮 أفكار مكشوفة! سيلعب: <b>${ {rock:'✊',paper:'✋',scissors:'✌️'}[aiChoice] }</b>!`;
                     ui.rps.attackerMsg.style.borderColor = '#9b59b6'; ui.rps.attackerMsg.style.color = '#fff';
-                    legilimensTarget = null; pendingAIChoice = aiChoice;
+                    target.hasLegilimens = false; pendingAIChoice = aiChoice;
                 } else {
                     ui.rps.attackerMsg.innerText = `يهاجمك بـ ${spell.name}! اختر حجر ورقة مقص للدفاع 🛡️`;
-                    ui.rps.attackerMsg.style.borderColor = '#e74c3c'; ui.rps.attackerMsg.style.color = '#e74c3c';
+                    ui.rps.attackerMsg.style.borderColor = '#e74c3c'; ui.rps.attackerMsg.style.color = '#fff';
                     pendingAIChoice = null;
                 }
             }, 800);
@@ -566,34 +599,66 @@
 
         function endGame(message) {
             isGameOver = true; toggleButtons(false); gameActive = false;
-            ui.gameOver.innerHTML = message + '<br><button onclick="location.reload()" style="padding: 10px 20px; font-size: 18px; margin-top: 20px; cursor: pointer; background:#f1c40f; border:none; border-radius:6px; font-weight:bold; color:#000;">مبارزة جديدة</button>';
+            ui.gameOver.innerHTML = message + '<br><button onclick="location.reload()" style="padding: 12px 25px; font-size: 18px; margin-top: 25px; cursor: pointer; background: linear-gradient(90deg, #f1c40f, #e67e22); color:#000; border:none; border-radius:8px; font-weight:900;">مبارزة جديدة</button>';
             ui.gameOver.style.display = 'block'; ui.message.innerText = 'انتهت المبارزة.';
         }
 
         Object.keys(ui.btns).forEach(key => { if(ui.btns[key]) ui.btns[key].addEventListener('click', () => { if(key!=='meditate') handleP1Action(key); }); });
 
+        // --- Enhanced Background Drawing ---
         function drawBackground() {
-            ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, canvas.width, canvas.height); // Sky
+            // Sky gradient
+            let skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height - 40);
+            skyGrad.addColorStop(0, '#020024');
+            skyGrad.addColorStop(1, '#0f172a');
+            ctx.fillStyle = skyGrad; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Wall
-            ctx.fillStyle = '#1e293b'; ctx.fillRect(0, canvas.height - 180, canvas.width, 140);
-            
-            // Pillars & Arches
-            ctx.fillStyle = '#0f172a';
-            for(let i=0; i<canvas.width; i+=120) {
-                ctx.fillRect(i + 40, canvas.height - 180, 40, 140);
-                ctx.beginPath(); ctx.arc(i + 60, canvas.height - 180, 20, Math.PI, 0); ctx.fill();
-            }
+            // Stars
+            stars.forEach(s => {
+                s.alpha += s.speed;
+                if(s.alpha > 1 || s.alpha < 0) s.speed = -s.speed;
+                ctx.globalAlpha = Math.abs(s.alpha);
+                ctx.fillStyle = '#fff';
+                ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI*2); ctx.fill();
+            });
+            ctx.globalAlpha = 1.0;
 
-            // Ground
-            ctx.fillStyle = '#334155'; ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
-            ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2;
-            for(let i=0; i<canvas.width; i+=40) { ctx.beginPath(); ctx.moveTo(i, canvas.height-40); ctx.lineTo(i-15, canvas.height); ctx.stroke(); }
-            ctx.beginPath(); ctx.moveTo(0, canvas.height-40); ctx.lineTo(canvas.width, canvas.height-40); ctx.stroke();
+            // Moon
+            ctx.beginPath(); ctx.arc(canvas.width - 120, 100, 50, 0, Math.PI*2);
+            ctx.fillStyle = '#f1c40f'; ctx.shadowBlur = 50; ctx.shadowColor = '#f1c40f'; ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Castle Silhouettes (Background)
+            ctx.fillStyle = '#060b14';
+            ctx.fillRect(50, canvas.height - 180, 80, 150);
+            ctx.beginPath(); ctx.moveTo(50, canvas.height - 180); ctx.lineTo(90, canvas.height - 240); ctx.lineTo(130, canvas.height - 180); ctx.fill();
+            
+            ctx.fillRect(200, canvas.height - 150, 60, 120);
+            ctx.fillRect(650, canvas.height - 200, 100, 170);
+            ctx.beginPath(); ctx.moveTo(650, canvas.height - 200); ctx.lineTo(700, canvas.height - 280); ctx.lineTo(750, canvas.height - 200); ctx.fill();
+
+            // Glowing Windows
+            ctx.fillStyle = 'rgba(241, 196, 15, 0.5)';
+            ctx.shadowBlur = 10; ctx.shadowColor = '#f1c40f';
+            ctx.fillRect(85, canvas.height - 150, 10, 20);
+            ctx.fillRect(695, canvas.height - 160, 10, 25);
+            ctx.shadowBlur = 0;
+
+            // Wall/Ground
+            ctx.fillStyle = '#1e293b'; ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
+            
+            // Ground perspective lines
+            ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 3;
+            for(let i=0; i<canvas.width; i+=60) { 
+                ctx.beginPath(); ctx.moveTo(i, canvas.height-60); ctx.lineTo(i-30, canvas.height); ctx.stroke(); 
+            }
+            ctx.beginPath(); ctx.moveTo(0, canvas.height-60); ctx.lineTo(canvas.width, canvas.height-60); ctx.stroke();
         }
 
         function animate() {
             if(!gameActive) return;
+            globalTime += 16;
             
             ctx.save();
             if (screenShake > 0) {
